@@ -1,0 +1,45 @@
+version: '3.8'
+
+services:
+  app:
+    build: .
+    ports:
+      - "3000:3000"
+    environment:
+      - OLLAMA_HOST=ollama
+      - REDIS_URL=redis://redis:6379
+      - PROXY_LIST=${PROXY_LIST}
+      - PROXY_ROTATION_STRATEGY=round-robin
+      - PROXY_MAX_RETRIES=3
+    depends_on:
+      - ollama
+      - redis
+    volumes:
+      - .:/app
+      - /app/node_modules
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
+
+  proxy-pool:
+    image: jhao104/proxy_pool:latest
+    ports:
+      - "5010:5010"
+    environment:
+      - DB_CONN=redis://redis:6379/0
+    depends_on:
+      - redis
+
+  ollama:
+    image: ollama/ollama:latest
+    ports:
+      - "11434:11434"
+    volumes:
+      - ollama_data:/root/.ollama
+
+  redis:
+    image: redis:alpine
+    ports:
+      - "6379:6379"
+
+volumes:
+  ollama_data:

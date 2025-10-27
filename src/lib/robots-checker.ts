@@ -15,7 +15,7 @@ export class RobotsChecker {
     const robotsTxt = await this.getRobotsTxt(url);
     const robots = robotsParser(url, robotsTxt);
     
-    return robots.isAllowed(url, userAgent);
+    return robots.isAllowed(url, userAgent) || false;
   }
 
   static async getCrawlDelay(url: string): Promise<number> {

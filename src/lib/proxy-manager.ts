@@ -4,6 +4,8 @@ export interface ProxyConfig {
   maxRetries: number;
   timeout: number;
   healthCheck: boolean;
+  pageLoadTimeout: number;
+  navigationWait: string;
 }
 
 export class ProxyManager {

@@ -1,26 +1,25 @@
 import axios from 'axios';
+import crypto from 'crypto';
 import { CarData } from '../types/car';
 import { redisClient } from './rate-limiter';
 
 const OLLAMA_BASE_URL = process.env.OLLAMA_HOST || 'http://localhost:11434';
 
-redisClient.on('error', (err) => console.error('Redis Client Error', err));
-redisClient.connect?.(); // compatível com redis >= 4
+// Log de erro do Redis
+redisClient.on('error', (err) => console.error('Redis Client Error:', err));
 
 export class LLMAnalyzer {
-  private static readonly CACHE_TTL = 7 * 24 * 60 * 60;
-
   private static readonly SYSTEM_PROMPT = `
     Você é um especialista em análise de veículos. Sua tarefa é extrair informações estruturadas de páginas de carros e gerar insights inteligentes.
 
     INSTRUÇÕES:
     1. Extraia TODAS as informações disponíveis seguindo EXATAMENTE a estrutura JSON fornecida
     2. Para campos não encontrados, retorne null ou omita
-    3. Converta todos os valores para os tipos apropriados (number, string, boolean)
+    3. Converta todos os valores para tipos apropriados
     4. Padronize unidades (km/l, R$, mm, etc.)
     5. Gere insights baseados nos dados extraídos
 
-    FORMATO DE RESPOSTA REQUERIDO:
+    FORMATO DE RESPOSTA JSON:
     {
       "informacoes_gerais": { ... },
       "motor": { ... },
@@ -44,24 +43,35 @@ export class LLMAnalyzer {
   `;
 
   static async analyzeCarContent(content: string, carModel: string): Promise<CarData> {
-    const cacheKey = `llm:${carModel}:${Buffer.from(content).toString('base64').substring(0, 50)}`;
+    // Cleanup antes do hashing e do prompt
+    const cleanedContent = content
+      .replace(/<script[\s\S]*?<\/script>/gi, '')
+      .replace(/<style[\s\S]*?<\/style>/gi, '')
+      .replace(/<\/?[^>]+(>|$)/g, '')
+      .replace(/\s{2,}/g, ' ')
+      .trim();
+
+    const hash = crypto.createHash('sha1').update(cleanedContent).digest('hex');
+    const cacheKey = `llm:${carModel}:${hash}`;
+
+    if (!redisClient.isReady) {
+      await redisClient.connect();
+    }
 
     const cached = await redisClient.get(cacheKey);
     if (cached) {
-      console.log(`✅ Cache hit for ${carModel}`);
+      console.log(`✅ Cache hit: ${carModel}`);
       return JSON.parse(cached);
     }
 
-    const userPrompt = `Analise o seguinte conteúdo sobre o veículo ${carModel} e retorne no formato JSON especificado:
+    const contentSnippet = cleanedContent.substring(0, 8000);
 
-      ${content.substring(0, 8000)} // Limit content length
+    const userPrompt = `
+      Analise o seguinte conteúdo sobre o veículo ${carModel}:
 
-      Baseado nos dados, gere também:
-      - Custo total de propriedade (TCO) anual estimado
-      - Indicador de liquidez no mercado
-      - Principais riscos de manutenção
-      - Match com estilos de vida (cidade, estrada, família, etc.)
-      - Previsão de desvalorização
+      ${contentSnippet}
+
+      Gere insights adicionais conforme instruções do sistema.
     `;
 
     try {
@@ -72,22 +82,42 @@ export class LLMAnalyzer {
         format: 'json'
       });
 
-      const parsedData = JSON.parse(response.data.response);
-      return this.validateAndCleanCarData(parsedData);
-    } catch (error) {
-      console.error('LLM Analysis error:', error);
+      let parsedData: any;
+
+      try {
+        parsedData = JSON.parse(response.data.response);
+      } catch {
+        console.warn('⚠️ JSON mal formatado. Tentando recuperar...');
+
+        const cleanedJSON = response.data.response
+          .replace(/```json/gi, '')
+          .replace(/```/g, '')
+          .trim()
+          .replace(/,(\s*[}\]])/g, '$1');
+
+        parsedData = JSON.parse(cleanedJSON);
+      }
+
+      const validated = this.validateAndCleanCarData(parsedData);
+
+      await redisClient.set(cacheKey, JSON.stringify(validated), { EX: 60 * 60 * 24 }); // TTL 24h
+
+      return validated;
+    } catch (error: any) {
+      console.error('❌ LLM Analysis error:', error.message);
       throw new Error('Failed to analyze car data');
     }
   }
 
   private static validateAndCleanCarData(data: any): CarData {
-    // Remove any personal data that might have been extracted
     const cleanData = { ...data };
-    
-    // Ensure all numeric fields are properly converted
+
     if (cleanData.informacoes_gerais) {
-      cleanData.informacoes_gerais.preco = this.safeParseNumber(cleanData.informacoes_gerais.preco);
-      cleanData.informacoes_gerais.ano = this.safeParseNumber(cleanData.informacoes_gerais.ano);
+      cleanData.informacoes_gerais.preco =
+        this.safeParseNumber(cleanData.informacoes_gerais.preco);
+
+      cleanData.informacoes_gerais.ano =
+        this.safeParseNumber(cleanData.informacoes_gerais.ano);
     }
 
     return cleanData as CarData;

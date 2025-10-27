@@ -6,19 +6,32 @@ services:
     ports:
       - "3000:3000"
     environment:
-      - OLLAMA_HOST=ollama
+      - OLLAMA_HOST=http://ollama:11434
       - REDIS_URL=redis://redis:6379
-      - PROXY_LIST=${PROXY_LIST}
+      - PROXY_POOL_URL=http://proxy-pool:5010
       - PROXY_ROTATION_STRATEGY=round-robin
       - PROXY_MAX_RETRIES=3
+      - SELENIUM_DRIVER=chrome
+      - SELENIUM_HEADLESS=true
     depends_on:
       - ollama
       - redis
+      - proxy-pool
+      - selenium
     volumes:
       - .:/app
       - /app/node_modules
     extra_hosts:
       - "host.docker.internal:host-gateway"
+
+  selenium:
+    image: selenium/standalone-chrome:latest
+    shm_size: "2gb"
+    environment:
+      - SE_NODE_MAX_SESSIONS=3
+      - SE_NODE_SESSION_TIMEOUT=300
+    ports:
+      - "4444:4444"
 
   proxy-pool:
     image: jhao104/proxy_pool:latest

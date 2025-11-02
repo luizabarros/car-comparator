@@ -76,12 +76,11 @@ export class LLMAnalyzer {
 
     try {
       const response: any = await axios.post(`${OLLAMA_BASE_URL}/api/generate`, {
-        model: 'llama3.1',
+        model: 'mistral',
         prompt: `${this.SYSTEM_PROMPT}\n\n${userPrompt}`,
         stream: false,
         format: 'json'
       });
-      console.log('✅ LLM Analysis done', response);
 
       const raw = response.data?.response || response.data?.output_text || '';
       if (!raw) throw new Error('Empty response from Ollama');

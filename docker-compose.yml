@@ -8,7 +8,7 @@ services:
     environment:
       - OLLAMA_HOST=http://ollama:11434
       - REDIS_URL=redis://redis:6379
-      - PROXY_POOL_URL=http://proxy-pool:5010
+      - PROXY_POOL_URL=http://proxy-pool:5010/get
       - PROXY_ROTATION_STRATEGY=round-robin
       - PROXY_MAX_RETRIES=3
       - SELENIUM_DRIVER=chrome
@@ -67,11 +67,11 @@ services:
         echo '⏳ Aguardando Ollama iniciar...'; 
         sleep 3; 
       done; 
-      if ! ollama list | grep -q 'llama3.1'; then 
-        echo '📥 Baixando modelo llama3.1...'; 
-        ollama pull llama3.1; 
+      if ! ollama list | grep -q 'mistral'; then 
+        echo '📥 Baixando modelo mistral...'; 
+        ollama pull mistral; 
       else 
-        echo '✅ Modelo llama3.1 já disponível, pulando download.'; 
+        echo '✅ Modelo mistral já disponível, pulando download.'; 
       fi;
       tail -f /dev/null
     "]

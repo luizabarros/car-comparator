@@ -12,8 +12,8 @@ export class GoogleSearchAPI {
 
   static async searchCarSites(carModel: string, year?: number): Promise<GoogleSearchResult[]> {
     const query = year 
-        ? `${carModel} ${year} site:webmotors.com.br OR site:olhonocarro.com.br OR site:shopcar.com.br OR site:carrodegaragem.com OR site:carroclub.com OR site:quatrorodas.com.br` 
-        : `${carModel} site:webmotors.com.br OR site:olhonocarro.com.br OR site:shopcar.com.br OR site:carrodegaragem.com OR site:carroclub.com OR site:quatrorodas.com.br`;
+        ? `${carModel} ${year} site:carrosnaweb.com.br OR site:olhonocarro.com.br OR site:shopcar.com.br OR site:carrodegaragem.com OR site:carroclub.com OR site:quatrorodas.com.br` 
+        : `${carModel} site:carrosnaweb.com.br OR site:olhonocarro.com.br OR site:shopcar.com.br OR site:carrodegaragem.com OR site:carroclub.com OR site:quatrorodas.com.br`;
 
     try {
       const response: any = await axios.get('https://www.googleapis.com/customsearch/v1', {

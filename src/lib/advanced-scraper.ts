@@ -24,9 +24,9 @@ export class AdvancedScraper {
       proxies: [proxy],
       rotationStrategy: 'round-robin',
       maxRetries: 3,
-      timeout: 20000, // Antes era 10000
+      timeout: 20000,
       healthCheck: true,
-      pageLoadTimeout: 25000, // Recomendado para Webmotors
+      pageLoadTimeout: 25000,
       navigationWait: 'networkidle2'
     };
   }

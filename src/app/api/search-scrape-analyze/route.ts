@@ -24,6 +24,7 @@ export async function POST(request: NextRequest) {
 
     // 1️⃣ SEARCH
     const urls = await GoogleSearchAPI.searchCarSites(carModel, year);
+    console.log(urls)
 
     if (!urls || urls.length === 0) {
       return NextResponse.json({ error: 'No URLs found for the given car model' }, { status: 404 });

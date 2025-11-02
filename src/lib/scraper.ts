@@ -6,12 +6,18 @@ import { Anonymizer } from '../utils/anonymizer';
 import { ProxyManager, ProxyConfig } from './proxy-manager';
 
 const SELENIUM_URL = process.env.SELENIUM_URL || 'http://selenium:4444/wd/hub';
-
+function randomUserAgent(): string {
+  const agents = [
+    'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
+    'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/17.0 Safari/605.1.15',
+    'Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/118.0.5993.70 Safari/537.36',
+  ];
+  return agents[Math.floor(Math.random() * agents.length)];
+}
 export class SeleniumScraper {
   private driver: WebDriver;
   private proxyManager: ProxyManager;
   private proxyUrl?: string;
-
   constructor(proxyConfig?: ProxyConfig) {
     const defaultConfig: ProxyConfig = {
       proxies: [],
@@ -28,7 +34,6 @@ export class SeleniumScraper {
 
     this.driver = this.createDriver();
   }
-
   private createDriver(): WebDriver {
     const options = new chrome.Options();
 
@@ -40,11 +45,7 @@ export class SeleniumScraper {
     options.addArguments('--lang=pt-BR');
     options.addArguments('--window-size=1366,768');
     options.addArguments('--disable-blink-features=AutomationControlled');
-
-    options.addArguments(
-      '--user-agent=Mozilla/5.0 (Windows NT 10.0; Win64; x64) ' +
-      'AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36'
-    );
+    options.addArguments(`--user-agent=${randomUserAgent()}`);
 
     if (this.proxyUrl) {
       console.log(`Using proxy: ${this.proxyUrl}`);
@@ -59,14 +60,43 @@ export class SeleniumScraper {
 
     driver.manage().setTimeouts({
       pageLoad: 25000,
-      implicit: 6000
+      implicit: 6000,
     });
 
-    // full stealth patch
+    // Full stealth patch
     driver.executeScript(`
+      // Esconde webdriver
       Object.defineProperty(navigator, 'webdriver', { get: () => undefined });
+
+      // Idioma e plataforma
       Object.defineProperty(navigator, 'languages', { get: () => ['pt-BR', 'pt'] });
       Object.defineProperty(navigator, 'platform', { get: () => 'Win32' });
+
+      // Plugins e mimeTypes falsos
+      Object.defineProperty(navigator, 'plugins', { get: () => [1, 2, 3, 4, 5] });
+      Object.defineProperty(navigator, 'mimeTypes', { get: () => [{ type: 'application/pdf' }] });
+
+      // Chrome runtime falso
+      window.chrome = {
+        runtime: {},
+        loadTimes: () => {},
+        csi: () => {},
+      };
+
+      // Permissões simuladas
+      const originalQuery = window.navigator.permissions.query;
+      window.navigator.permissions.query = (parameters) =>
+        parameters.name === 'notifications'
+          ? Promise.resolve({ state: Notification.permission })
+          : originalQuery(parameters);
+
+      // Hardware spoof
+      Object.defineProperty(navigator, 'hardwareConcurrency', { get: () => 8 });
+      Object.defineProperty(navigator, 'deviceMemory', { get: () => 8 });
+
+      // Adiciona pequenas movimentações para parecer humano
+      window.scrollBy(0, 1);
+      window.scrollBy(0, -1);
     `);
 
     return driver;
@@ -84,12 +114,16 @@ export class SeleniumScraper {
       await this.delay(2000 + Math.random() * 2000);
 
       const links = await this.driver.findElements(By.css('a'));
-      const validLinks = await Promise.all(links.map(async (l: any) => {
-        try {
-          const href = await l.getAttribute('href');
-          return href && href.startsWith('http') ? l : null;
-        } catch { return null; }
-      }));
+      const validLinks = await Promise.all(
+        links.map(async (l: any) => {
+          try {
+            const href = await l.getAttribute('href');
+            return href && href.startsWith('http') ? l : null;
+          } catch {
+            return null;
+          }
+        })
+      );
 
       const filtered = validLinks.filter(Boolean);
       if (filtered.length > 0) {
@@ -129,10 +163,10 @@ export class SeleniumScraper {
         await this.delay(await RobotsChecker.getCrawlDelay(url));
 
         await this.driver.get(url);
-
         await this.driver.wait(until.elementLocated(By.tagName('body')), 15000);
-        await this.humanScroll();
 
+        // Simula leitura e scroll humano
+        await this.humanScroll();
         await this.delay(2000 + Math.random() * 3000);
 
         const html = await this.driver.getPageSource();
@@ -142,7 +176,6 @@ export class SeleniumScraper {
         if (this.proxyUrl) this.proxyManager.markProxySuccess(proxyUsed);
 
         return { content: html, anonymized, proxyUsed };
-
       } catch (error) {
         const proxyUsed = this.proxyUrl ?? 'direct';
         console.error(`Error scraping ${url} using ${proxyUsed}:`, error);
@@ -168,7 +201,7 @@ export class SeleniumScraper {
   }
 
   private delay(ms: number): Promise<void> {
-    return new Promise(resolve => setTimeout(resolve, ms));
+    return new Promise((resolve) => setTimeout(resolve, ms));
   }
 
   async quit(): Promise<void> {

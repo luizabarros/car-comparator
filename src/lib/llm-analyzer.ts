@@ -3,7 +3,7 @@ import crypto from 'crypto';
 import { CarData } from '../types/car';
 import { redisClient } from './rate-limiter';
 
-const OLLAMA_BASE_URL = process.env.OLLAMA_HOST || 'http://localhost:11434';
+const OLLAMA_BASE_URL = process.env.OLLAMA_HOST || 'http://ollama:11434';
 
 // Log de erro do Redis
 redisClient.on('error', (err) => console.error('Redis Client Error:', err));
@@ -45,17 +45,17 @@ export class LLMAnalyzer {
   static async analyzeCarContent(content: string, carModel: string): Promise<CarData> {
     // Cleanup antes do hashing e do prompt
     const cleanedContent = content
-      .replace(/<script[\s\S]*?<\/script>/gi, '')
-      .replace(/<style[\s\S]*?<\/style>/gi, '')
-      .replace(/<\/?[^>]+(>|$)/g, '')
-      .replace(/\s{2,}/g, ' ')
-      .trim();
+      .replace(/```json/gi, '')
+      .replace(/```/g, '')
+      .replace(/[“”]/g, '"')
+      .trim()
+      .replace(/,(\s*[}\]])/g, '$1');
 
     const hash = crypto.createHash('sha1').update(cleanedContent).digest('hex');
     const cacheKey = `llm:${carModel}:${hash}`;
 
     if (!redisClient.isReady) {
-      await redisClient.connect();
+      console.warn('Redis not ready, skipping cache...');
     }
 
     const cached = await redisClient.get(cacheKey);
@@ -76,20 +76,24 @@ export class LLMAnalyzer {
 
     try {
       const response: any = await axios.post(`${OLLAMA_BASE_URL}/api/generate`, {
-        model: 'mistral',
+        model: 'llama3.1',
         prompt: `${this.SYSTEM_PROMPT}\n\n${userPrompt}`,
         stream: false,
         format: 'json'
       });
+      console.log('✅ LLM Analysis done', response);
+
+      const raw = response.data?.response || response.data?.output_text || '';
+      if (!raw) throw new Error('Empty response from Ollama');
 
       let parsedData: any;
 
       try {
-        parsedData = JSON.parse(response.data.response);
+        parsedData = JSON.parse(raw);
       } catch {
         console.warn('⚠️ JSON mal formatado. Tentando recuperar...');
 
-        const cleanedJSON = response.data.response
+        const cleanedJSON = raw
           .replace(/```json/gi, '')
           .replace(/```/g, '')
           .trim()

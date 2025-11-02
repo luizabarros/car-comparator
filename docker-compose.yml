@@ -14,15 +14,21 @@ services:
       - SELENIUM_DRIVER=chrome
       - SELENIUM_HEADLESS=true
     depends_on:
-      - ollama
-      - redis
-      - proxy-pool
-      - selenium
+      ollama:
+        condition: service_healthy
+      redis:
+        condition: service_started
+      proxy-pool:
+        condition: service_started
+      selenium:
+        condition: service_started
     volumes:
       - .:/app
       - /app/node_modules
     extra_hosts:
       - "host.docker.internal:host-gateway"
+    networks:
+      - carnet
 
   selenium:
     image: selenium/standalone-chrome:latest
@@ -32,6 +38,8 @@ services:
       - SE_NODE_SESSION_TIMEOUT=300
     ports:
       - "4444:4444"
+    networks:
+      - carnet
 
   proxy-pool:
     image: jhao104/proxy_pool:latest
@@ -41,18 +49,51 @@ services:
       - DB_CONN=redis://redis:6379/0
     depends_on:
       - redis
+    networks:
+      - carnet
 
   ollama:
-    image: ollama/ollama:latest
+    build:
+      context: .
+      dockerfile: Dockerfile.ollama
     ports:
       - "11434:11434"
     volumes:
       - ollama_data:/root/.ollama
+    entrypoint: ["/bin/sh", "-c", "
+      ollama serve & 
+      sleep 5 && 
+      until curl -sf http://localhost:11434/api/tags > /dev/null; do 
+        echo '⏳ Aguardando Ollama iniciar...'; 
+        sleep 3; 
+      done; 
+      if ! ollama list | grep -q 'llama3.1'; then 
+        echo '📥 Baixando modelo llama3.1...'; 
+        ollama pull llama3.1; 
+      else 
+        echo '✅ Modelo llama3.1 já disponível, pulando download.'; 
+      fi;
+      tail -f /dev/null
+    "]
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:11434/api/tags"]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+      start_period: 20s
+    networks:
+      - carnet
 
   redis:
     image: redis:alpine
     ports:
       - "6379:6379"
+    networks:
+      - carnet
 
 volumes:
   ollama_data:
+
+networks:
+  carnet:
+    driver: bridge

@@ -5,7 +5,8 @@
     "dev": "next dev",
     "build": "next build",
     "start": "next start",
-    "lint": "eslint"
+    "lint": "eslint",
+    "start:prod": "NODE_ENV=production node .next/standalone/server.js"
   },
   "dependencies": {
     "@chakra-ui/react": "^2.8.0",
@@ -31,6 +32,9 @@
     "@types/react-dom": "^18.2.7",
     "@types/selenium-webdriver": "^4.35.2",
     "@types/uuid": "^9.0.0",
+    "autoprefixer": "^10.4.21",
+    "postcss": "^8.5.6",
+    "tailwindcss": "^4.1.16",
     "typescript": "^5.1.7"
   }
 }

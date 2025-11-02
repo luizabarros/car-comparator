@@ -1,7 +1,18 @@
+export const dynamic = 'force-dynamic'
+export const runtime = 'nodejs'
+export const preferredRegion = 'auto'
+export const dynamicParams = true
+export const fetchCache = 'force-no-store'
+export const revalidate = 0
+
 import { NextRequest, NextResponse } from 'next/server';
 import { GoogleSearchAPI } from '../../../lib/google-search';
 import { AdvancedScraper } from '../../../lib/advanced-scraper';
 import { LLMAnalyzer } from '../../../lib/llm-analyzer';
+
+export async function GET() {
+  return NextResponse.json({ message: 'Use POST to run search + scrape + analyze' })
+}
 
 export async function POST(request: NextRequest) {
   try {

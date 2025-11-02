@@ -11,7 +11,6 @@ import {
   Text
 } from '@chakra-ui/react';
 import SearchForm from './components/SearchForm';
-import CarCard from './components/CarCard';
 import { CarData } from '../types/car';
 
 export default function Home() {
@@ -113,9 +112,9 @@ export default function Home() {
 
         {searchResults.length > 0 && (
           <SimpleGrid columns={{ base: 1, md: 2, lg: 3 }} spacing={6} width="full">
-            {searchResults.map((car, index) => (
+            {/* {searchResults.map((car, index) => (
               <CarCard key={index} carData={car} />
-            ))}
+            ))} */}
           </SimpleGrid>
         )}
       </VStack>

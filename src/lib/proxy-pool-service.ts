@@ -52,7 +52,6 @@ export class DefaultProxyPoolService implements ProxyPoolService {
     }
   }
 
-  // Opcional — pode ser chamado no startup para checar se o pool está ativo
   async ensureHealthy(): Promise<void> {
     try {
       const response: any = await axios.get(`${this.baseUrl}/count`);

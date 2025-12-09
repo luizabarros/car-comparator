@@ -63,7 +63,6 @@ export class SeleniumScraper {
       implicit: 6000,
     });
 
-    // Full stealth patch
     driver.executeScript(`
       // Esconde webdriver
       Object.defineProperty(navigator, 'webdriver', { get: () => undefined });

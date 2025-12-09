@@ -10,6 +10,14 @@ import { GoogleSearchAPI } from '../../../lib/google-search';
 import { AdvancedScraper } from '../../../lib/advanced-scraper';
 import { LLMAnalyzer } from '../../../lib/llm-analyzer';
 
+interface IResult {
+  url: string;
+  analysis?: any;
+  proxyUsed?: string;
+  error?: string;
+  imageUrl?: string;
+}
+
 export async function GET() {
   return NextResponse.json({ message: 'Use POST to run search + scrape + analyze' })
 }
@@ -22,34 +30,32 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: 'Car model is required' }, { status: 400 });
     }
 
-    // 1️⃣ SEARCH
     const urls = await GoogleSearchAPI.searchCarSites(carModel, year);
-    console.log(urls)
 
     if (!urls || urls.length === 0) {
       return NextResponse.json({ error: 'No URLs found for the given car model' }, { status: 404 });
     }
 
     const scraper = new AdvancedScraper();
-    const results: Array<{ url: string; analysis?: any; proxyUsed?: string; error?: string }> = [];
 
-    // 2️⃣ SCRAPE + 3️⃣ ANALYZE
-    for (const url of urls) {
-      try {
+    const settledResults = await Promise.allSettled(
+      urls.map(async (url) => {
         const scrapeResult = await scraper.scrapeWithProxyRotation(url.link, 3);
-
         const analysis = await LLMAnalyzer.analyzeCarContent(scrapeResult.anonymized, carModel);
 
-        results.push({
+        return {
           url: url.link,
           proxyUsed: scrapeResult.proxyUsed,
-          analysis
-        });
-      } catch (err) {
-        console.error(`Failed scraping/analyzing URL ${url}:`, err);
-        results.push({ url: url.link, error: err instanceof Error ? err.message : 'Unknown error' });
-      }
-    }
+          analysis,
+          imageUrl: url.imageUrl
+        };
+      })
+    );
+
+    const results = settledResults.map(res => {
+      if (res.status === "fulfilled") return res.value;
+      return { url: res.reason?.url ?? "unknown", error: res.reason instanceof Error ? res.reason.message : "Unknown error" };
+    });
 
     await scraper.quit();
 

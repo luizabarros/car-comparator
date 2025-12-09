@@ -22,7 +22,6 @@ export class ProxyManager {
     this.failedProxies = new Set();
     this.proxyStats = new Map();
     
-    // Initialize stats
     this.proxies.forEach(proxy => {
       this.proxyStats.set(proxy, { success: 0, failures: 0 });
     });
@@ -37,7 +36,6 @@ export class ProxyManager {
       case 'random':
         const availableProxies = this.proxies.filter(proxy => !this.failedProxies.has(proxy));
         if (availableProxies.length === 0) {
-          // Reset failed proxies if all are marked as failed
           this.failedProxies.clear();
           return this.proxies[Math.floor(Math.random() * this.proxies.length)];
         }
@@ -45,7 +43,7 @@ export class ProxyManager {
 
       case 'failover':
         const healthyProxy = this.proxies.find(proxy => !this.failedProxies.has(proxy));
-        return healthyProxy || this.proxies[0]; // Fallback to first proxy
+        return healthyProxy || this.proxies[0];
 
       case 'round-robin':
       default:
@@ -69,7 +67,6 @@ export class ProxyManager {
       case 'round-robin':
         this.currentIndex = (this.currentIndex + 1) % this.proxies.length;
         break;
-      // For random and failover, getCurrentProxy handles the logic
     }
   }
 
@@ -77,7 +74,7 @@ export class ProxyManager {
     const stats = this.proxyStats.get(proxy);
     if (stats) {
       stats.success++;
-      this.failedProxies.delete(proxy); // Remove from failed if it was there
+      this.failedProxies.delete(proxy);
     }
   }
 

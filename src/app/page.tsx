@@ -23,7 +23,6 @@ export default function Home() {
     setSearchResults([]);
 
     try {
-      // 1. Search for URLs
       const searchResponse = await fetch('/api/search', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -41,12 +40,10 @@ export default function Home() {
         return;
       }
 
-      // 2. Scrape and analyze each URL
       const analysisResults: CarData[] = [];
       
       for (const result of searchData.results.slice(0, 3)) { // Limit to 3 URLs
         try {
-          // Scrape
           const scrapeResponse = await fetch('/api/scrape', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },

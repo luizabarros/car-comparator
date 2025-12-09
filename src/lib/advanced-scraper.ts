@@ -7,7 +7,6 @@ export class AdvancedScraper {
   private scraper: SeleniumScraper | null = null;
 
   constructor() {
-    // Escolhe a estratégia de proxy
     if (process.env.PROXY_POOL_URL) {
       this.proxyPool = new DefaultProxyPoolService(process.env.PROXY_POOL_URL);
     } else if (process.env.PROXY_LIST) {
@@ -18,7 +17,6 @@ export class AdvancedScraper {
     }
   }
 
-  // Cria um ProxyConfig completo para o SeleniumScraper
   private createProxyConfig(proxy: string): ProxyConfig {
     return {
       proxies: [proxy],
@@ -39,7 +37,6 @@ export class AdvancedScraper {
         const proxy = await this.proxyPool.getProxy();
         console.log(`Attempt ${attempts + 1} with proxy: ${proxy}`);
 
-        // Cria o SeleniumScraper com ProxyConfig completo
         this.scraper = new SeleniumScraper(this.createProxyConfig(proxy));
         const result = await this.scraper.scrapeUrl(url);
 
@@ -56,7 +53,7 @@ export class AdvancedScraper {
 
         if (attempts < maxAttempts) {
           console.log(`Waiting before retry...`);
-          await this.delay(5000 * attempts); // backoff exponencial
+          await this.delay(5000 * attempts);
         }
       }
     }

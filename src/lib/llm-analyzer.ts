@@ -1,137 +1,86 @@
-import axios from 'axios';
-import crypto from 'crypto';
-import { CarData } from '../types/car';
-import { redisClient } from './rate-limiter';
+import { BedrockRuntimeClient, InvokeModelCommand } from "@aws-sdk/client-bedrock-runtime";
+import { toUtf8 } from "@aws-sdk/util-utf8-node";
 
-const OLLAMA_BASE_URL = process.env.OLLAMA_HOST || 'http://ollama:11434';
+import crypto from "crypto";
+import { CarData } from "../types/car";
+import { redisClient } from "./rate-limiter";
 
-// Log de erro do Redis
-redisClient.on('error', (err) => console.error('Redis Client Error:', err));
+const client = new BedrockRuntimeClient({ region: process.env.AWS_REGION });
 
-export class LLMAnalyzer {
+redisClient.on("error", (err) => console.error("Redis Client Error:", err));
+
+export class AWSLLMAnalyzer {
   private static readonly SYSTEM_PROMPT = `
-    Você é um especialista em análise de veículos. Sua tarefa é extrair informações estruturadas de páginas de carros e gerar insights inteligentes.
+    Você é um especialista em análise de veículos, capaz de interpretar HTML, comparativos e reviews de carros.
 
     INSTRUÇÕES:
-    1. Extraia TODAS as informações disponíveis seguindo EXATAMENTE a estrutura JSON fornecida
-    2. Para campos não encontrados, retorne null ou omita
-    3. Converta todos os valores para tipos apropriados
-    4. Padronize unidades (km/l, R$, mm, etc.)
-    5. Gere insights baseados nos dados extraídos
+    1. Extraia TODAS as informações disponíveis do HTML, comparativos e opiniões do usuário.
+    2. Campos não encontrados: null ou omitido.
+    3. Converta todos os valores para tipos corretos.
+    4. Padronize unidades: km/l, R$, mm, cv, kgfm, kWh, km/h.
+    5. Gere insights amigáveis para o usuário final.
+    6. Inclua novos campos para diferenciação acadêmica:
+      - índice de segurança NCAP
+      - índice de roubo
+      - histórico de depreciação
+      - pós-venda e atendimento das concessionárias
 
     FORMATO DE RESPOSTA JSON:
     {
-      "informacoes_gerais": { ... },
-      "motor": { ... },
-      "transmissao": { ... },
-      "suspensao": { ... },
-      "freios": { ... },
-      "direcao": { ... },
-      "pneus": { ... },
-      "dimensoes": { ... },
-      "desempenho": { ... },
-      "consumo": { ... },
-      "autonomia": { ... },
+      "informacoes_gerais": { "fabricante": string, "modelo": string, "ano": number, "versao": string, "preco": number, "garantia": string, "ipva": number, "seguro": number },
+      "motor": { "propulsao": string, "combustivel": string, "cilindros": string, "cilindrada": string, "potencia_maxima": number, "torque_maximo": number },
+      "transmissao": { "cambio": string, "marchas": string, "tracao": string, "acoplamento": string },
+      "suspensao": { "dianteira": string, "traseira": string, "elemento_elastico": string },
+      "freios": { "dianteiros": string, "traseiros": string },
+      "direcao": { "tipo": string },
+      "pneus": { "dianteiros": string, "traseiros": string, "estepe": string },
+      "dimensoes": { "comprimento": number, "largura": number, "altura": number, "dist_entre_eixos": number, "porta_malas": number, "peso": number },
+      "desempenho": { "velocidade_max": number, "aceleracao_0_100": number, "frenagem_100_0": number },
+      "consumo": { "urbano": number, "rodoviario": number, "eletrico": number | null },
+      "autonomia": { "urbana": number, "rodoviaria": number, "eletrica": number | null },
+      "avaliacao": { "ncap": number, "protecao_adultos": number, "protecao_criancas": number, "protecao_pedestres": number, "assistencia": number, "concessionarias": number },
+      "historico_depreciacao": [{ "ano": number, "preco": number }],
       "analise_ia": {
         "custo_total_propriedade": number,
         "liquidez": "alta" | "media" | "baixa",
         "risco_manutencao": string,
-        "match_estilo_vida": string[],
         "comparacao_preditiva": string
-      }
+      },
+      "reclamacoes": string[],
+      "concessionarias_proximas": string[],
     }
   `;
 
-  static async analyzeCarContent(content: string, carModel: string): Promise<CarData> {
-    // Cleanup antes do hashing e do prompt
-    const cleanedContent = content
-      .replace(/```json/gi, '')
-      .replace(/```/g, '')
-      .replace(/[“”]/g, '"')
-      .trim()
-      .replace(/,(\s*[}\]])/g, '$1');
+  static async analyzeCarHTML(htmlContent: string, carModel: string): Promise<CarData> {
+    const cleanedContent = htmlContent.replace(/[“”]/g, '"').trim();
+    const hash = crypto.createHash("sha1").update(cleanedContent).digest("hex");
+    const cacheKey = `aws_llm:${carModel}:${hash}`;
 
-    const hash = crypto.createHash('sha1').update(cleanedContent).digest('hex');
-    const cacheKey = `llm:${carModel}:${hash}`;
-
-    if (!redisClient.isReady) {
-      console.warn('Redis not ready, skipping cache...');
-    }
+    if (!redisClient.isReady) console.warn("Redis not ready, skipping cache...");
 
     const cached = await redisClient.get(cacheKey);
-    if (cached) {
-      console.log(`✅ Cache hit: ${carModel}`);
-      return JSON.parse(cached);
-    }
-
-    const contentSnippet = cleanedContent.substring(0, 8000);
-
-    const userPrompt = `
-      Analise o seguinte conteúdo sobre o veículo ${carModel}:
-
-      ${contentSnippet}
-
-      Gere insights adicionais conforme instruções do sistema.
-    `;
+    if (cached) return JSON.parse(cached);
 
     try {
-      const response: any = await axios.post(`${OLLAMA_BASE_URL}/api/generate`, {
-        model: 'mistral',
-        prompt: `${this.SYSTEM_PROMPT}\n\n${userPrompt}`,
-        stream: false,
-        format: 'json'
+      const command = new InvokeModelCommand({
+        modelId: "amazon.titan-text",
+        contentType: "application/json",
+        accept: "application/json",
+        input: JSON.stringify({
+          prompt: `${this.SYSTEM_PROMPT}\nAnalise o HTML do veículo ${carModel}:\n${cleanedContent.substring(0, 10000)}`
+        })
       });
 
-      const raw = response.data?.response || response.data?.output_text || '';
-      if (!raw) throw new Error('Empty response from Ollama');
+      const response = await client.send(command);
+      const rawText = response?.body ? toUtf8(response.body as Uint8Array) : "";
+      const data = JSON.parse(rawText);
 
-      let parsedData: any;
+      await redisClient.set(cacheKey, JSON.stringify(data), { EX: 60 * 60 * 24 });
 
-      try {
-        parsedData = JSON.parse(raw);
-      } catch {
-        console.warn('⚠️ JSON mal formatado. Tentando recuperar...');
-
-        const cleanedJSON = raw
-          .replace(/```json/gi, '')
-          .replace(/```/g, '')
-          .trim()
-          .replace(/,(\s*[}\]])/g, '$1');
-
-        parsedData = JSON.parse(cleanedJSON);
-      }
-
-      const validated = this.validateAndCleanCarData(parsedData);
-
-      await redisClient.set(cacheKey, JSON.stringify(validated), { EX: 60 * 60 * 24 }); // TTL 24h
-
-      return validated;
+      return data;
     } catch (error: any) {
-      console.error('❌ LLM Analysis error:', error.message);
-      throw new Error('Failed to analyze car data');
+      console.error("❌ AWS Bedrock LLM error:", error.message);
+      throw new Error("Failed to analyze car HTML via Bedrock");
     }
-  }
-
-  private static validateAndCleanCarData(data: any): CarData {
-    const cleanData = { ...data };
-
-    if (cleanData.informacoes_gerais) {
-      cleanData.informacoes_gerais.preco =
-        this.safeParseNumber(cleanData.informacoes_gerais.preco);
-
-      cleanData.informacoes_gerais.ano =
-        this.safeParseNumber(cleanData.informacoes_gerais.ano);
-    }
-
-    return cleanData as CarData;
-  }
-
-  private static safeParseNumber(value: any): number | null {
-    if (typeof value === 'number') return value;
-    if (typeof value === 'string') {
-      const num = parseFloat(value.replace(/[^\d.,]/g, '').replace(',', '.'));
-      return isNaN(num) ? null : num;
-    }
-    return null;
   }
 }

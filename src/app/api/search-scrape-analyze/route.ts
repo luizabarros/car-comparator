@@ -9,6 +9,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { GoogleSearchAPI } from '../../../lib/google-search';
 import { AdvancedScraper } from '../../../lib/advanced-scraper';
 import { LLMAnalyzer } from '../../../lib/llm-analyzer';
+import { CarData } from '@/types/car'
 
 interface IResult {
   url: string;
@@ -24,42 +25,58 @@ export async function GET() {
 
 export async function POST(request: NextRequest) {
   try {
-    const { carModel, year } = await request.json();
+    const carItems: string[] = await request.json();
 
-    if (!carModel) {
-      return NextResponse.json({ error: 'Car model is required' }, { status: 400 });
-    }
-
-    const urls = await GoogleSearchAPI.searchCarSites(carModel, year);
-
-    if (!urls || urls.length === 0) {
-      return NextResponse.json({ error: 'No URLs found for the given car model' }, { status: 404 });
+    if (!Array.isArray(carItems) || carItems.length === 0) {
+      return NextResponse.json({ error: 'Array of car items is required' }, { status: 400 });
     }
 
     const scraper = new AdvancedScraper();
+    const allResults: Record<string, CarData> = {};
 
-    const settledResults = await Promise.allSettled(
-      urls.map(async (url) => {
-        const scrapeResult = await scraper.scrapeWithProxyRotation(url.link, 3);
-        const analysis = await LLMAnalyzer.analyzeCarContent(scrapeResult.anonymized, carModel);
+    await Promise.allSettled(
+      carItems.map(async (item) => {
+        const [carModel, yearStr] = item.split(',').map(s => s.trim());
+        const year = Number(yearStr);
 
-        return {
-          url: url.link,
-          proxyUsed: scrapeResult.proxyUsed,
-          analysis,
-          imageUrl: url.imageUrl
-        };
+        if (!carModel) throw new Error(`Invalid car model in item: "${item}"`);
+
+        const urls = await GoogleSearchAPI.searchCarSites(carModel, year);
+
+        if (!urls || urls.length === 0) {
+          return { carModel, year, results: [] as IResult[] };
+        }
+
+        const settledResults = await Promise.allSettled(
+          urls.map(async (url) => {
+            const scrapeResult = await scraper.scrapeWithProxyRotation(url.link, 3);
+            const analysis = await LLMAnalyzer.analyzeCarContent(scrapeResult.anonymized, carModel);
+
+            allResults[`${carModel},${year}`] = analysis;
+
+            return {
+              url: url.link,
+              proxyUsed: scrapeResult.proxyUsed,
+              analysis,
+              imageUrl: url.imageUrl
+            };
+          })
+        );
+
+        const results: IResult[] = settledResults.map(res => {
+          if (res.status === "fulfilled") return res.value;
+          return { url: res.reason?.url ?? "unknown", error: res.reason instanceof Error ? res.reason.message : "Unknown error" };
+        });
+
+        return { carModel, year, results };
       })
     );
 
-    const results = settledResults.map(res => {
-      if (res.status === "fulfilled") return res.value;
-      return { url: res.reason?.url ?? "unknown", error: res.reason instanceof Error ? res.reason.message : "Unknown error" };
-    });
-
     await scraper.quit();
 
-    return NextResponse.json({ success: true, results });
+    const comparisonHTML = await LLMAnalyzer.compareCars(allResults);
+
+    return NextResponse.json({ success: true, results: comparisonHTML });
   } catch (error) {
     console.error('Search-Scrape-Analyze error:', error);
     return NextResponse.json(

@@ -1,4 +1,5 @@
 import axios from 'axios';
+import { redisClient } from './rate-limiter';
 
 interface GoogleSearchResult {
   title: string;
@@ -35,6 +36,10 @@ export class GoogleSearchAPI {
   }
 
   static async searchCarSites(carModel: string, year?: number): Promise<GoogleSearchResult[]> {
+    const cacheKey = `google_search:${carModel}:${year}`;
+    const cached = await redisClient.get(cacheKey);
+    if (cached) return JSON.parse(cached);
+    
     const queries = [
       `${carModel}${year ? ` ${year}` : ''} site:carrosnaweb.com.br OR site:olhonocarro.com.br OR site:shopcar.com.br OR site:carrodegaragem.com OR site:carroclub.com OR site:quatrorodas.com.br`,
       `${carModel}${year ? ` ${year}` : ''} site:reclameaqui.com.br`,
@@ -42,6 +47,8 @@ export class GoogleSearchAPI {
     ];
 
     const resultsArrays = await Promise.all(queries.map(q => this.search(q, 10)));
+
+    await redisClient.set(cacheKey, JSON.stringify(resultsArrays.flat()), { EX: 60 * 60 * 24 });
 
     return resultsArrays.flat();
   }

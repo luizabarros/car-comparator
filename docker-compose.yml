@@ -6,7 +6,6 @@ services:
     ports:
       - "3000:3000"
     environment:
-      - OLLAMA_HOST=http://ollama:11434
       - REDIS_URL=redis://redis:6379
       - PROXY_POOL_URL=http://proxy-pool:5010/get
       - PROXY_ROTATION_STRATEGY=round-robin
@@ -14,8 +13,6 @@ services:
       - SELENIUM_DRIVER=chrome
       - SELENIUM_HEADLESS=true
     depends_on:
-      ollama:
-        condition: service_healthy
       redis:
         condition: service_started
       proxy-pool:
@@ -52,47 +49,12 @@ services:
     networks:
       - carnet
 
-  ollama:
-    build:
-      context: .
-      dockerfile: Dockerfile.ollama
-    ports:
-      - "11434:11434"
-    volumes:
-      - ollama_data:/root/.ollama
-    entrypoint: ["/bin/sh", "-c", "
-      ollama serve & 
-      sleep 5 && 
-      until curl -sf http://localhost:11434/api/tags > /dev/null; do 
-        echo '⏳ Aguardando Ollama iniciar...'; 
-        sleep 3; 
-      done; 
-      if ! ollama list | grep -q 'mistral'; then 
-        echo '📥 Baixando modelo mistral...'; 
-        ollama pull mistral; 
-      else 
-        echo '✅ Modelo mistral já disponível, pulando download.'; 
-      fi;
-      tail -f /dev/null
-    "]
-    healthcheck:
-      test: ["CMD", "curl", "-f", "http://localhost:11434/api/tags"]
-      interval: 10s
-      timeout: 5s
-      retries: 10
-      start_period: 20s
-    networks:
-      - carnet
-
   redis:
     image: redis:alpine
     ports:
       - "6379:6379"
     networks:
       - carnet
-
-volumes:
-  ollama_data:
 
 networks:
   carnet:

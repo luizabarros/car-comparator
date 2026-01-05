@@ -1,7 +1,8 @@
 import { Builder, By, until, WebDriver, Key } from 'selenium-webdriver';
 import chrome from 'selenium-webdriver/chrome';
+import crypto from "crypto";
 import { RobotsChecker } from './robots-checker';
-import { RateLimiter } from './rate-limiter';
+import { RateLimiter, redisClient } from './rate-limiter';
 import { Anonymizer } from '../utils/anonymizer';
 import { ProxyManager, ProxyConfig } from './proxy-manager';
 
@@ -148,6 +149,17 @@ export class SeleniumScraper {
   }
 
   async scrapeUrl(url: string): Promise<{ content: string; anonymized: string; proxyUsed: string }> {
+    const cacheKey = `scrape:${crypto.createHash('sha1').update(url).digest('hex')}`;
+
+    if (redisClient.isReady) {
+      try {
+        const cached = await redisClient.get(cacheKey);
+        if (cached) return JSON.parse(cached);
+      } catch (err) {
+        console.warn('⚠️ Cache read failed, continuing scrape');
+      }
+    }
+
     let attempts = this.proxyManager.getHealthyProxies().length || 1;
 
     while (attempts > 0) {
@@ -173,6 +185,14 @@ export class SeleniumScraper {
 
         const proxyUsed = this.proxyUrl ?? 'direct';
         if (this.proxyUrl) this.proxyManager.markProxySuccess(proxyUsed);
+
+        if (redisClient.isReady) {
+          try {
+            await redisClient.setEx(cacheKey, 60 * 60 * 24, JSON.stringify({ content: html, anonymized, proxyUsed }));
+          } catch {
+            console.warn('⚠️ Cache write failed');
+          }
+        }
 
         return { content: html, anonymized, proxyUsed };
       } catch (error) {

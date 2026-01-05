@@ -48,6 +48,16 @@ export class LLMAnalyzer {
 
   static async compareCars(carsData: Record<string, CarData>): Promise<string> {
     try {
+      const cache_key = `aws_llm:compare:${crypto
+        .createHash("sha1")
+        .update(JSON.stringify(carsData))
+        .digest("hex")}`;
+
+      if (!redisClient.isReady) console.warn("Redis not ready, skipping cache...");
+
+      const cached = await redisClient.get(cache_key);
+      if (cached) return cached;
+      
       const comparisonPrompt = `
         Você é um especialista em análise de veículos.
         Compare os seguintes carros entre si por todos os itens técnicos, financeiros e de desempenho:
@@ -67,6 +77,7 @@ export class LLMAnalyzer {
 
       const response = await client.send(command);
       const rawText = response?.body ? toUtf8(response.body as Uint8Array) : "";
+      await redisClient.set(cache_key, rawText, { EX: 60 * 60 * 24 });
       return rawText;
     } catch (error: any) {
       console.error("❌ AWS Bedrock LLM comparison error:", error.message);

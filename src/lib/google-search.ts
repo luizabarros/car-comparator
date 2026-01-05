@@ -43,7 +43,7 @@ export class GoogleSearchAPI {
     const queries = [
       `${carModel}${year ? ` ${year}` : ''} site:carrosnaweb.com.br OR site:olhonocarro.com.br OR site:shopcar.com.br OR site:carrodegaragem.com OR site:carroclub.com OR site:quatrorodas.com.br`,
       `${carModel}${year ? ` ${year}` : ''} site:reclameaqui.com.br`,
-      `${carModel}${year ? ` ${year}` : ''} concessionaria`
+      `${carModel}${year ? ` ${year}` : ''} concessionaria`,
     ];
 
     const resultsArrays = await Promise.all(queries.map(q => this.search(q, 10)));

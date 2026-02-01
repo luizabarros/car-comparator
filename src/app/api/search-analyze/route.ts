@@ -10,8 +10,10 @@ import { LLMAnalyzer } from '../../../lib/llm-analyzer';
 import { AnalyzedCar, CarData, CarItem, ProcessedURLs, SearchResult } from '@/types/car'
 import { SearchAPI } from '@/lib/search'
 
-const ANALYSIS_TIMEOUT = 60000; // 60 segundos por veículo
-const TOTAL_REQUEST_TIMEOUT = 180000; // 3 minutos total
+const ANALYSIS_TIMEOUT_PER_CAR = 60000;
+const SEARCH_TIMEOUT_PER_CAR = 30000;
+const BASE_COMPARISON_TIMEOUT = 30000;
+const EXTRA_COMPARISON_PER_CAR = 15000;
 
 function withTimeout<T>(promise: Promise<T>, timeoutMs: number, errorMessage: string): Promise<T> {
   return Promise.race([
@@ -45,7 +47,7 @@ class SearchFilter {
         
         const searchResults = await withTimeout(
           SearchAPI.searchCarSites(item.carModel, item.year),
-          30000,
+          SEARCH_TIMEOUT_PER_CAR,
           `Search timeout for ${item.carModel}`
         );
 
@@ -119,7 +121,7 @@ class LLMExtractionFilter {
               dealerships: item.dealershipResults
             }
           ),
-          ANALYSIS_TIMEOUT,
+          ANALYSIS_TIMEOUT_PER_CAR,
           `LLM analysis timeout for ${item.carModel}`
         );
 
@@ -166,12 +168,15 @@ class ComparisonFilter {
       throw new Error('No car data available for comparison');
     }
 
-    console.log(`📊 Gerando comparativo HTML...`);
+    const numCars = Object.keys(allCarsData).length;
+    const dynamicTimeout = BASE_COMPARISON_TIMEOUT + ((numCars - 1) * EXTRA_COMPARISON_PER_CAR);
+
+    console.log(`📊 Gerando comparativo HTML para ${numCars} veículo(s)... (timeout: ${dynamicTimeout/1000}s)`);
     
     const comparisonHTML = await withTimeout(
       LLMAnalyzer.generateComparisonHTML(allCarsData),
-      30000,
-      'Comparison HTML generation timeout'
+      dynamicTimeout,
+      `Comparison HTML generation timeout (${numCars} cars)`
     );
 
     console.log(`✅ Comparativo gerado com sucesso!`);
@@ -190,7 +195,6 @@ class CarAnalysisPipeline {
   async execute(carItems: string[]) {
     console.log(`🚗 Iniciando análise de ${carItems.length} veículo(s)...`);
 
-    // Pipeline: Parse → Search → Process URLs → Extract with LLM → Generate Comparison
     const parsedItems = await this.parseFilter.process(carItems);
     const searchResults = await this.searchFilter.process(parsedItems);
     const processedURLs = await this.urlProcessingFilter.process(searchResults);
@@ -206,7 +210,6 @@ class CarAnalysisPipeline {
 
     const comparisonHTML = await this.comparisonFilter.process(analyzedCars);
 
-    // Preparar dados para resposta
     const allCarsData: Record<string, CarData> = {};
     analyzedCars.forEach((car) => {
       if (car.data) {
@@ -245,12 +248,22 @@ export async function POST(request: NextRequest) {
       }, { status: 400 });
     }
 
+    const numCars = carItems.length;
+    
+    const totalTimeout = 
+      (SEARCH_TIMEOUT_PER_CAR * numCars) +
+      (ANALYSIS_TIMEOUT_PER_CAR * numCars) +
+      BASE_COMPARISON_TIMEOUT +
+      (EXTRA_COMPARISON_PER_CAR * (numCars - 1));
+    
+    console.log(`⏱️ Timeout total para ${numCars} carro(s): ${totalTimeout/1000}s`);
+
     const pipeline = new CarAnalysisPipeline();
     
     const result = await withTimeout(
       pipeline.execute(carItems),
-      TOTAL_REQUEST_TIMEOUT,
-      'Total request timeout exceeded'
+      totalTimeout,
+      `Total request timeout exceeded for ${numCars} cars`
     );
 
     return NextResponse.json({

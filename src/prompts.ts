@@ -1,7 +1,3 @@
-/**
- * System Prompt para Extração de Dados de Veículos
- * Usado pelo LLM para extrair informações estruturadas a partir de URLs
- */
 export const SYSTEM_PROMPT_EXTRACTOR = `
 Você é um especialista em análise automotiva com acesso a web search. Sua função é extrair informações COMPLETAS e PRECISAS sobre veículos.
 

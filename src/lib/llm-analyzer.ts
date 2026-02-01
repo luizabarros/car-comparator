@@ -18,10 +18,6 @@ interface SearchResult {
 }
 
 export class LLMAnalyzer {
-  
-  /**
-   * Extrai dados estruturados do carro a partir de URLs usando GPT-4 com web search
-   */
   static async extractCarDataFromURLs(
     urls: string[],
     carModel: string,
@@ -29,14 +25,12 @@ export class LLMAnalyzer {
     searchResults?: SearchResult[]
   ): Promise<CarData> {
     
-    // Gera hash para cache
     const cacheKey = `openai_extract:${carModel}:${year}:${crypto
       .createHash('sha256')
       .update(urls.join('|'))
       .digest('hex')
       .substring(0, 16)}`;
 
-    // Verifica cache
     if (redisClient.isReady) {
       const cached = await redisClient.get(cacheKey);
       if (cached) {
@@ -48,34 +42,33 @@ export class LLMAnalyzer {
     try {
       const carInfo = year ? `${carModel} ${year}` : carModel;
       
-      // Monta o prompt com as URLs e contexto
       const userPrompt = `
-Analise as seguintes URLs sobre o **${carInfo}** e extraia TODAS as informações disponíveis:
+      Analise as seguintes URLs sobre o **${carInfo}** e extraia TODAS as informações disponíveis:
 
-**URLs para análise:**
-${urls.map((url, i) => `${i + 1}. ${url}`).join('\n')}
+      **URLs para análise:**
+      ${urls.map((url, i) => `${i + 1}. ${url}`).join('\n')}
 
-${searchResults ? `\n**Contexto adicional dos resultados de busca:**\n${searchResults.map(r => `- ${r.title}: ${r.snippet}`).slice(0, 5).join('\n')}` : ''}
+      ${searchResults ? `\n**Contexto adicional dos resultados de busca:**\n${searchResults.map(r => `- ${r.title}: ${r.snippet}`).slice(0, 5).join('\n')}` : ''}
 
-**INSTRUÇÕES IMPORTANTES:**
+      **INSTRUÇÕES IMPORTANTES:**
 
-1. **Visite e analise cada URL** usando web search para obter informações reais e atualizadas
-2. **Preencha TODOS os campos** do JSON de resposta
-3. Para campos não encontrados, use \`null\`
-4. **Nunca invente dados** - se não encontrar, deixe \`null\`
-5. Padronize unidades: km/l, R$, mm, cv, kgfm, kWh, km/h
-6. Para **reclamações do Reclame Aqui**, faça um **resumo geral do veredito** e liste até 5 reclamações principais
-7. Para **concessionárias**, liste apenas as mais relevantes da região
+      1. **Visite e analise cada URL** usando web search para obter informações reais e atualizadas
+      2. **Preencha TODOS os campos** do JSON de resposta
+      3. Para campos não encontrados, use \`null\`
+      4. **Nunca invente dados** - se não encontrar, deixe \`null\`
+      5. Padronize unidades: km/l, R$, mm, cv, kgfm, kWh, km/h
+      6. Para **reclamações do Reclame Aqui**, faça um **resumo geral do veredito** e liste até 5 reclamações principais
+      7. Para **concessionárias**, liste apenas as mais relevantes da região
 
-**Use web search** para complementar informações que não estiverem nas URLs fornecidas.
+      **Use web search** para complementar informações que não estiverem nas URLs fornecidas.
 
-Retorne APENAS o JSON no formato especificado, sem markdown ou explicações adicionais.
-`;
+      Retorne APENAS o JSON no formato especificado, sem markdown ou explicações adicionais.
+    `;
 
       console.log(`🔄 Chamando OpenAI GPT-4 para: ${carInfo}`);
 
       const completion = await openai.chat.completions.create({
-        model: "gpt-4-turbo-preview", // ou "gpt-4" se preferir
+        model: "gpt-4-turbo-preview",
         messages: [
           {
             role: "system",
@@ -87,13 +80,12 @@ Retorne APENAS o JSON no formato especificado, sem markdown ou explicações adi
           }
         ],
         response_format: { type: "json_object" },
-        temperature: 0.3, // Mais determinístico para extração de dados
+        temperature: 0.3,
         max_tokens: 4096,
       });
 
       const responseText = completion.choices[0].message.content || "{}";
       
-      // Parse do JSON
       let carData: CarData;
       try {
         carData = JSON.parse(responseText);
@@ -102,14 +94,12 @@ Retorne APENAS o JSON no formato especificado, sem markdown ou explicações adi
         throw new Error("Failed to parse AI response as JSON");
       }
 
-      // Enriquece com metadados
       carData.metadata = {
         sources: urls,
         extractedAt: new Date().toISOString(),
         model: "gpt-4-turbo-preview"
       };
 
-      // Salva no cache (24 horas)
       if (redisClient.isReady) {
         await redisClient.set(cacheKey, JSON.stringify(carData), { 
           EX: 60 * 60 * 24 
@@ -122,7 +112,6 @@ Retorne APENAS o JSON no formato especificado, sem markdown ou explicações adi
     } catch (error: any) {
       console.error("❌ OpenAI extraction error:", error.message);
       
-      // Retorna estrutura vazia em caso de erro
       return {
         informacoes_gerais: {
           fabricante: null,
@@ -145,9 +134,6 @@ Retorne APENAS o JSON no formato especificado, sem markdown ou explicações adi
     }
   }
 
-  /**
-   * Gera HTML comparativo usando GPT-4
-   */
   static async generateComparisonHTML(carsData: Record<string, CarData>): Promise<string> {
     
     const cacheKey = `openai_compare:${crypto
@@ -156,7 +142,6 @@ Retorne APENAS o JSON no formato especificado, sem markdown ou explicações adi
       .digest('hex')
       .substring(0, 16)}`;
 
-    // Verifica cache
     if (redisClient.isReady) {
       const cached = await redisClient.get(cacheKey);
       if (cached) {
@@ -169,7 +154,6 @@ Retorne APENAS o JSON no formato especificado, sem markdown ou explicações adi
       const carNames = Object.keys(carsData).join(', ');
       console.log(`🎨 Gerando HTML comparativo para: ${carNames}`);
 
-      // Prepara dados dos carros de forma legível
       const carsJSON = Object.entries(carsData)
         .map(([name, data]) => `### ${name}\n${JSON.stringify(data, null, 2)}`)
         .join('\n\n---\n\n');
@@ -252,24 +236,21 @@ Retorne APENAS o JSON no formato especificado, sem markdown ou explicações adi
             content: userPrompt
           }
         ],
-        temperature: 0.7, // Mais criativo para HTML
+        temperature: 0.7,
         max_tokens: 8000,
       });
 
       const htmlContent = completion.choices[0].message.content || "";
 
-      // Limpa possíveis markdown wrappers
       let cleanHTML = htmlContent
         .replace(/```html\n?/g, '')
         .replace(/```\n?/g, '')
         .trim();
 
-      // Garante que tem DOCTYPE
       if (!cleanHTML.includes('<!DOCTYPE')) {
         cleanHTML = `<!DOCTYPE html>\n${cleanHTML}`;
       }
 
-      // Salva no cache (24 horas)
       if (redisClient.isReady) {
         await redisClient.set(cacheKey, cleanHTML, { 
           EX: 60 * 60 * 24 
@@ -282,7 +263,6 @@ Retorne APENAS o JSON no formato especificado, sem markdown ou explicações adi
     } catch (error: any) {
       console.error("❌ OpenAI comparison error:", error.message);
       
-      // HTML de fallback em caso de erro
       return `
         <!DOCTYPE html>
         <html lang="pt-BR">

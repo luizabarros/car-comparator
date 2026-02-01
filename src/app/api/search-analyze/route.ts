@@ -33,10 +33,8 @@ export async function POST(request: NextRequest) {
 
     console.log(`🚗 Iniciando análise de ${carItems.length} veículo(s)...`);
 
-    // Armazena todos os dados estruturados dos carros
     const allCarsData: Record<string, CarData> = {};
 
-    // Processa cada carro em paralelo
     const analysisResults = await Promise.allSettled(
       carItems.map(async (item) => {
         const [carModel, yearStr] = item.split(',').map(s => s.trim());
@@ -48,7 +46,6 @@ export async function POST(request: NextRequest) {
 
         console.log(`🔍 Buscando URLs para: ${carModel} ${year || ''}`);
 
-        // 1. Busca URLs via Google Search (SerpAPI)
         const searchResults = await SearchAPI.searchCarSites(carModel, year);
 
         if (!searchResults || searchResults.length === 0) {
@@ -58,13 +55,11 @@ export async function POST(request: NextRequest) {
 
         console.log(`✅ Encontradas ${searchResults.length} URLs para ${carModel}`);
 
-        // 2. Extrai URLs relevantes (apenas orgânicas, sem imagens/local)
         const urls = searchResults
           .filter(r => r.type === 'organic' && r.link)
           .map(r => r.link)
-          .slice(0, 10); // Limita a 10 URLs para não estourar o token limit
+          .slice(0, 10);
 
-        // 3. Envia URLs para LLM extrair dados estruturados
         console.log(`🤖 Extraindo dados via LLM para: ${carModel}`);
         const carData = await LLMAnalyzer.extractCarDataFromURLs(
           urls,
@@ -73,7 +68,6 @@ export async function POST(request: NextRequest) {
           searchResults
         );
 
-        // Armazena os dados estruturados
         const key = year ? `${carModel},${year}` : carModel;
         allCarsData[key] = carData;
 
@@ -83,7 +77,6 @@ export async function POST(request: NextRequest) {
       })
     );
 
-    // Verifica se houve algum sucesso
     const successfulAnalyses = analysisResults.filter(
       r => r.status === 'fulfilled' && r.value.data !== null
     );
@@ -99,7 +92,6 @@ export async function POST(request: NextRequest) {
 
     console.log(`✅ ${successfulAnalyses.length} veículo(s) analisado(s) com sucesso`);
 
-    // 4. Gera HTML comparativo (se houver múltiplos carros)
     console.log(`📊 Gerando comparativo HTML...`);
     const comparisonHTML = await LLMAnalyzer.generateComparisonHTML(allCarsData);
 

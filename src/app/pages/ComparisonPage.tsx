@@ -21,6 +21,7 @@ export default function ComparisonPage() {
   const [nextId, setNextId] = useState(3);
   const [comparisonHTML, setComparisonHTML] = useState<string | null>(null);
   const [priceHistoryCars, setPriceHistoryCars] = useState<any[]>([]);
+  const [isComparing, setIsComparing] = useState(false);
 
   const handleUpdateSlot = (id: number, field: string, value: any) => {
     setSlots(prev =>
@@ -44,36 +45,78 @@ export default function ComparisonPage() {
       return;
     }
 
-    // 🔒 ativa loading de forma segura
-    setSlots(prev =>
-      prev.map(s => (s.data ? { ...s, loading: true } : s))
-    );
+    // Ativa estado de loading global
+    setIsComparing(true);
 
     try {
+      // Formata os carros no padrão esperado pela API: "Modelo, Ano"
       const selectedCars = filledSlots.map(
         s => `${s.data.Modelo}, ${s.data.AnoModelo}`
       );
 
-      const response = await compareCars(selectedCars);
-      setComparisonHTML(response.results);
+      console.log('🚗 Enviando para API:', selectedCars);
 
+      // Chama a API refatorada
+      const response = await fetch('/api/search-analyze', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(selectedCars),
+      });
+
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.details || errorData.error || 'Erro ao comparar veículos');
+      }
+
+      const data = await response.json();
+
+      console.log('✅ Resposta da API:', data);
+
+      // Verifica se a resposta tem o formato esperado
+      if (!data.success || !data.comparisonHTML) {
+        throw new Error('Resposta da API inválida');
+      }
+
+      // Atualiza o HTML de comparação
+      setComparisonHTML(data.comparisonHTML);
+
+      // Busca histórico de preços FIPE para cada carro
       const carsWithHistory = await Promise.all(
         filledSlots.map(async slot => {
-          const historyResponse = await fipeService.getCarHistory(
-            slot.data.MarcaCodigo,
-            slot.data.ModeloCodigo,
-            slot.data.AnoCodigo
-          );
+          try {
+            const historyResponse = await fipeService.getCarHistory(
+              slot.data.MarcaCodigo,
+              slot.data.ModeloCodigo,
+              slot.data.AnoCodigo
+            );
 
-          return {
-            model: `${slot.data.Modelo} ${slot.data.AnoModelo}`,
-            priceHistory: historyResponse.priceHistory,
-          };
+            return {
+              model: `${slot.data.Modelo} ${slot.data.AnoModelo}`,
+              priceHistory: historyResponse.priceHistory,
+            };
+          } catch (error) {
+            console.warn(`⚠️ Erro ao buscar histórico FIPE para ${slot.data.Modelo}:`, error);
+            return {
+              model: `${slot.data.Modelo} ${slot.data.AnoModelo}`,
+              priceHistory: [],
+            };
+          }
         })
       );
 
-      setPriceHistoryCars(carsWithHistory);
+      setPriceHistoryCars(carsWithHistory.filter(car => car.priceHistory.length > 0));
+
+      toast({
+        title: 'Comparação realizada!',
+        description: `${filledSlots.length} veículos comparados com sucesso.`,
+        variant: 'default',
+      });
+
     } catch (err) {
+      console.error('❌ Erro na comparação:', err);
+      
       toast({
         title: 'Erro na comparação',
         description:
@@ -81,10 +124,7 @@ export default function ComparisonPage() {
         variant: 'destructive',
       });
     } finally {
-      // 🔓 desativa loading SEM risco de sobrescrever estado
-      setSlots(prev =>
-        prev.map(s => ({ ...s, loading: false }))
-      );
+      setIsComparing(false);
     }
   };
 
@@ -112,10 +152,10 @@ export default function ComparisonPage() {
   };
 
   const activeCarsCount = slots.filter(s => s.data).length;
-  const isLoadingAny = slots.some(s => s.loading);
+  const isLoadingAny = slots.some(s => s.loading) || isComparing;
 
   return (
-    <div className="min-h-screen">
+    <div className="min-h-screen bg-gradient-to-br from-slate-50 to-slate-100">
       <motion.header
         initial={{ opacity: 0, y: -20 }}
         animate={{ opacity: 1, y: 0 }}
@@ -129,10 +169,10 @@ export default function ComparisonPage() {
             </div>
             <div>
               <h1 className="text-xl font-bold text-slate-900">
-                Comparador FIPE
+                Comparador Inteligente
               </h1>
               <p className="text-xs text-slate-600 hidden sm:block">
-                Compare até 4 veículos simultaneamente
+                Compare até 4 veículos com análise de IA
               </p>
             </div>
           </div>
@@ -190,31 +230,85 @@ export default function ComparisonPage() {
           </AnimatePresence>
         </div>
 
-        <div className="flex justify-end mb-6">
+        <div className="flex justify-center mb-8">
           <Button
             onClick={handleCompare}
             disabled={activeCarsCount < 2 || isLoadingAny}
+            size="lg"
+            className="gap-2 px-8 py-6 text-lg font-semibold shadow-lg hover:shadow-xl transition-all"
           >
-            {isLoadingAny ? 'Comparando...' : 'Comparar veículos'}
+            {isComparing ? (
+              <>
+                <div className="animate-spin rounded-full h-5 w-5 border-b-2 border-white"></div>
+                Analisando com IA...
+              </>
+            ) : (
+              <>
+                <Car className="w-5 h-5" />
+                Comparar {activeCarsCount} veículos
+              </>
+            )}
           </Button>
         </div>
 
-        {comparisonHTML && (
-          <ComparisonAIResult html={comparisonHTML} />
+        {isComparing && (
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            className="bg-blue-50 border border-blue-200 rounded-lg p-6 mb-8"
+          >
+            <div className="flex items-center gap-4">
+              <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600"></div>
+              <div>
+                <h3 className="font-semibold text-blue-900">
+                  Processando análise com IA...
+                </h3>
+                <p className="text-sm text-blue-700">
+                  Buscando informações, extraindo dados e gerando comparativo. Isso pode levar até 30 segundos.
+                </p>
+              </div>
+            </div>
+          </motion.div>
         )}
 
-        {priceHistoryCars.length > 0 && (
-          <PriceHistoryChart cars={priceHistoryCars} />
+        {comparisonHTML && !isComparing && (
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.5 }}
+          >
+            <ComparisonAIResult html={comparisonHTML} />
+          </motion.div>
+        )}
+
+        {priceHistoryCars.length > 0 && !isComparing && (
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.5, delay: 0.2 }}
+          >
+            <PriceHistoryChart cars={priceHistoryCars} />
+          </motion.div>
         )}
 
         {activeCarsCount === 0 && !isLoadingAny && (
-          <motion.div initial={{ opacity: 0, scale: 0.95 }} animate={{ opacity: 1, scale: 1 }} transition={{ duration: 0.5 }} className="text-center py-20">
+          <motion.div
+            initial={{ opacity: 0, scale: 0.95 }}
+            animate={{ opacity: 1, scale: 1 }}
+            transition={{ duration: 0.5 }}
+            className="text-center py-20"
+          >
             <div className="inline-flex items-center justify-center w-20 h-20 bg-blue-100 rounded-full mb-6">
               <Car className="w-10 h-10 text-blue-600" />
             </div>
-            <h2 className="text-2xl font-bold text-slate-900 mb-2">Comece sua comparação</h2>
-            <p className="text-slate-600 max-w-md mx-auto">
-              Selecione marca, modelo e ano nos cartões acima para comparar preços e especificações técnicas.
+            <h2 className="text-2xl font-bold text-slate-900 mb-2">
+              Comece sua comparação inteligente
+            </h2>
+            <p className="text-slate-600 max-w-md mx-auto mb-4">
+              Selecione marca, modelo e ano nos cartões acima. Nossa IA buscará informações na web e gerará um relatório completo.
+            </p>
+            <p className="text-sm text-slate-500">
+              ✨ Análise com IA • 📊 Dados FIPE • 🔍 Busca na web
             </p>
           </motion.div>
         )}

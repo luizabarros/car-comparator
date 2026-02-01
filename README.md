@@ -454,3 +454,22 @@ MIT License - Projeto acadêmico para TCC
 Sugestões e melhorias são bem-vindas! Abra uma issue ou PR.
 
 ---
+## 📊 Fluxo Completo
+
+```
+Usuário seleciona carros no front-end
+         ↓
+ComparisonPage chama /api/search-analyze
+         ↓
+route.ts → SearchAPI.searchCarSites() [SerpAPI]
+         ↓
+route.ts → LLMAnalyzer.extractCarDataFromURLs() [OpenAI + Web Search]
+         ↓
+route.ts → LLMAnalyzer.generateComparisonHTML() [OpenAI]
+         ↓
+Retorna { success, data, comparisonHTML }
+         ↓
+ComparisonPage.tsx renderiza:
+  - ComparisonAIResult (HTML)
+  - PriceHistoryChart (FIPE)
+```

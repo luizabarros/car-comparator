@@ -1,6 +1,6 @@
 import Head from 'next/head';
 import { Toaster } from './components/Toaster';
-import ComparisonPage from './pages/ComparisonPage';
+import ComparisonPage from './components/ComparisonPage';
 
 export default function Home() {
   return (

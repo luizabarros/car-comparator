@@ -50,7 +50,7 @@ export class SearchAPI {
           device: params.device || 'desktop',
           tbm: params.tbm,
           num: params.engine === 'google' && 10,
-        }
+        },
       });
 
       const data = response.data as any;
@@ -58,39 +58,45 @@ export class SearchAPI {
       switch (params.engine) {
         case 'google_images':
           const imageResults = data.images_results || [];
-          allResults.push(...imageResults.slice(0, 2).map((item: any) => ({
-            link: item.link || '',
-            imageUrl: item.original || item.thumbnail,
-            source: item.source,
-            type: 'image'
-          })));
+          allResults.push(
+            ...imageResults.slice(0, 2).map((item: any) => ({
+              link: item.link || '',
+              imageUrl: item.original || item.thumbnail,
+              source: item.source,
+              type: 'image',
+            })),
+          );
           break;
 
         case 'google_local':
           const localResults = data.local_results || [];
-          allResults.push(...localResults.slice(0, 5).map((item: any) => ({
-            title: item.title || '',
-            link: item.links?.website || '',
-            snippet: item.description || '',
-            source: item.type,
-            phone: item.phone,
-            address: item.address,
-            hours: item.hours,
-            type: 'local'
-          })));
+          allResults.push(
+            ...localResults.slice(0, 5).map((item: any) => ({
+              title: item.title || '',
+              link: item.links?.website || '',
+              snippet: item.description || '',
+              source: item.type,
+              phone: item.phone,
+              address: item.address,
+              hours: item.hours,
+              type: 'local',
+            })),
+          );
           break;
 
         case 'google':
         default:
           const organicResults = data.organic_results || [];
-          allResults.push(...organicResults.slice(0, 5).map((item: any) => ({
-            title: item.title || '',
-            link: item.link || '',
-            snippet: item.snippet || '',
-            date: item.date,
-            source: item.source,
-            type: 'organic'
-          })));
+          allResults.push(
+            ...organicResults.slice(0, 5).map((item: any) => ({
+              title: item.title || '',
+              link: item.link || '',
+              snippet: item.snippet || '',
+              date: item.date,
+              source: item.source,
+              type: 'organic',
+            })),
+          );
           break;
       }
 
@@ -104,32 +110,32 @@ export class SearchAPI {
   static async searchCarSites(carModel: string, year?: number): Promise<SearchResult[]> {
     const searchTerm = `${carModel}${year ? ` ${year}` : ''}`;
     const cacheKey = `serpapi_search:${carModel}:${year}`;
-    
+
     const cached = await redisClient.get(cacheKey);
     if (cached) return JSON.parse(cached);
 
     const searchPromises = [
       this.searchSerpAPI({
         engine: 'google',
-        q: `${searchTerm} ficha técnica site:olhonocarro.com.br OR site:shopcar.com.br OR site:fichacompleta.com.br`
+        q: `${searchTerm} ficha técnica site:olhonocarro.com.br OR site:shopcar.com.br OR site:fichacompleta.com.br`,
       }),
 
       this.searchSerpAPI({
         engine: 'google',
-        q: `${searchTerm} site:reclameaqui.com.br`
+        q: `${searchTerm} site:reclameaqui.com.br`,
       }),
 
       this.searchSerpAPI({
         engine: 'google_local',
         q: `${searchTerm} concessionária`,
-        tbm: 'lcl'
+        tbm: 'lcl',
       }),
 
       this.searchSerpAPI({
         engine: 'google_images',
         q: `${searchTerm}`,
-        tbm: 'isch'
-      })
+        tbm: 'isch',
+      }),
     ];
 
     const resultsArrays = await Promise.all(searchPromises);
@@ -138,8 +144,8 @@ export class SearchAPI {
 
     const finalResults = allResults.slice(0, 50);
 
-    await redisClient.set(cacheKey, JSON.stringify(finalResults), { 
-      EX: 60 * 60 * 24 
+    await redisClient.set(cacheKey, JSON.stringify(finalResults), {
+      EX: 60 * 60 * 24,
     });
 
     return finalResults;
@@ -148,18 +154,18 @@ export class SearchAPI {
   static async searchCarImages(carModel: string, year?: number): Promise<SearchResult[]> {
     const searchTerm = `${carModel}${year ? ` ${year}` : ''}`;
     const cacheKey = `serpapi_images:${carModel}:${year}`;
-    
+
     const cached = await redisClient.get(cacheKey);
     if (cached) return JSON.parse(cached);
 
     const results = await this.searchSerpAPI({
       engine: 'google_images',
       q: searchTerm,
-      tbm: 'isch'
+      tbm: 'isch',
     });
 
-    await redisClient.set(cacheKey, JSON.stringify(results), { 
-      EX: 60 * 60 * 12 
+    await redisClient.set(cacheKey, JSON.stringify(results), {
+      EX: 60 * 60 * 12,
     });
 
     return results;
@@ -168,7 +174,7 @@ export class SearchAPI {
   static async searchDealerships(carModel: string, location = 'Brazil'): Promise<SearchResult[]> {
     const searchTerm = `${carModel} concessionária`;
     const cacheKey = `serpapi_dealers:${carModel}:${location}`;
-    
+
     const cached = await redisClient.get(cacheKey);
     if (cached) return JSON.parse(cached);
 
@@ -176,30 +182,34 @@ export class SearchAPI {
       engine: 'google_local',
       q: searchTerm,
       location: location,
-      tbm: 'lcl'
+      tbm: 'lcl',
     });
 
-    await redisClient.set(cacheKey, JSON.stringify(results), { 
-      EX: 60 * 60 * 6
+    await redisClient.set(cacheKey, JSON.stringify(results), {
+      EX: 60 * 60 * 6,
     });
 
     return results;
   }
 
-  static async searchInSpecificSite(carModel: string, site: string, year?: number): Promise<SearchResult[]> {
+  static async searchInSpecificSite(
+    carModel: string,
+    site: string,
+    year?: number,
+  ): Promise<SearchResult[]> {
     const searchTerm = `${carModel}${year ? ` ${year}` : ''} site:${site}`;
     const cacheKey = `serpapi_site:${carModel}:${year}:${site}`;
-    
+
     const cached = await redisClient.get(cacheKey);
     if (cached) return JSON.parse(cached);
 
     const results = await this.searchSerpAPI({
       engine: 'google',
-      q: searchTerm
+      q: searchTerm,
     });
 
-    await redisClient.set(cacheKey, JSON.stringify(results), { 
-      EX: 60 * 60 * 24 
+    await redisClient.set(cacheKey, JSON.stringify(results), {
+      EX: 60 * 60 * 24,
     });
 
     return results;

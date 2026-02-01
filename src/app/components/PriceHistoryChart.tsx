@@ -1,4 +1,4 @@
-import { Line } from "react-chartjs-2";
+import { Line } from 'react-chartjs-2';
 import {
   Chart as ChartJS,
   Title,
@@ -8,8 +8,8 @@ import {
   CategoryScale,
   LinearScale,
   PointElement,
-  Filler
-} from "chart.js";
+  Filler,
+} from 'chart.js';
 
 ChartJS.register(
   Title,
@@ -19,7 +19,7 @@ ChartJS.register(
   CategoryScale,
   LinearScale,
   PointElement,
-  Filler
+  Filler,
 );
 
 // Paleta de cores consistente
@@ -27,7 +27,7 @@ const COLORS = [
   { border: '#3B82F6', bg: 'rgba(59, 130, 246, 0.1)' }, // Blue
   { border: '#10B981', bg: 'rgba(16, 185, 129, 0.1)' }, // Green
   { border: '#F59E0B', bg: 'rgba(245, 158, 11, 0.1)' }, // Amber
-  { border: '#EF4444', bg: 'rgba(239, 68, 68, 0.1)' },  // Red
+  { border: '#EF4444', bg: 'rgba(239, 68, 68, 0.1)' }, // Red
 ];
 
 interface PriceHistoryChartProps {
@@ -48,7 +48,7 @@ export default function PriceHistoryChart({ cars }: PriceHistoryChartProps) {
 
   // Extrai todos os meses únicos e ordena
   const allMonths = Array.from(
-    new Set(cars.flatMap(c => c.priceHistory.map(p => p.month)))
+    new Set(cars.flatMap((c) => c.priceHistory.map((p) => p.month))),
   ).sort((a, b) => {
     // Tenta converter para Date para ordenar corretamente
     const dateA = new Date(a);
@@ -63,8 +63,8 @@ export default function PriceHistoryChart({ cars }: PriceHistoryChartProps) {
 
     return {
       label: car.model,
-      data: allMonths.map(month => {
-        const entry = car.priceHistory.find(p => p.month === month);
+      data: allMonths.map((month) => {
+        const entry = car.priceHistory.find((p) => p.month === month);
         if (!entry) return null;
 
         // Remove formatação e converte para número
@@ -116,7 +116,7 @@ export default function PriceHistoryChart({ cars }: PriceHistoryChartProps) {
         <Line
           data={{
             labels: allMonths,
-            datasets: datasets
+            datasets: datasets,
           }}
           options={{
             responsive: true,
@@ -146,13 +146,13 @@ export default function PriceHistoryChart({ cars }: PriceHistoryChartProps) {
                 borderWidth: 1,
                 displayColors: true,
                 callbacks: {
-                  label: function(context) {
+                  label: function (context) {
                     const label = context.dataset.label || '';
                     const value = context.parsed.y;
                     return `${label}: R$ ${value?.toLocaleString('pt-BR')}`;
-                  }
-                }
-              }
+                  },
+                },
+              },
             },
             scales: {
               x: {
@@ -176,7 +176,7 @@ export default function PriceHistoryChart({ cars }: PriceHistoryChartProps) {
                   font: {
                     size: 12,
                   },
-                  callback: function(value) {
+                  callback: function (value) {
                     return `R$ ${Number(value).toLocaleString('pt-BR')}`;
                   },
                 },
@@ -191,8 +191,8 @@ export default function PriceHistoryChart({ cars }: PriceHistoryChartProps) {
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
           {cars.map((car, index) => {
             const prices = car.priceHistory
-              .map(p => Number(p.price.replace(/[^0-9]/g, '')))
-              .filter(p => !isNaN(p));
+              .map((p) => Number(p.price.replace(/[^0-9]/g, '')))
+              .filter((p) => !isNaN(p));
 
             if (prices.length === 0) return null;
 
@@ -205,18 +205,10 @@ export default function PriceHistoryChart({ cars }: PriceHistoryChartProps) {
             const color = COLORS[colorIndex];
 
             return (
-              <div
-                key={car.model}
-                className="bg-slate-50 rounded-lg p-4 border border-slate-200"
-              >
+              <div key={car.model} className="bg-slate-50 rounded-lg p-4 border border-slate-200">
                 <div className="flex items-center gap-2 mb-3">
-                  <div
-                    className="w-3 h-3 rounded-full"
-                    style={{ backgroundColor: color.border }}
-                  />
-                  <h4 className="font-medium text-sm text-slate-900 truncate">
-                    {car.model}
-                  </h4>
+                  <div className="w-3 h-3 rounded-full" style={{ backgroundColor: color.border }} />
+                  <h4 className="font-medium text-sm text-slate-900 truncate">{car.model}</h4>
                 </div>
                 <div className="space-y-1 text-xs">
                   <div className="flex justify-between">
@@ -232,7 +224,8 @@ export default function PriceHistoryChart({ cars }: PriceHistoryChartProps) {
                         variation > 0 ? 'text-red-600' : 'text-green-600'
                       }`}
                     >
-                      {variation > 0 ? '+' : ''}{variation.toFixed(1)}%
+                      {variation > 0 ? '+' : ''}
+                      {variation.toFixed(1)}%
                     </span>
                   </div>
                 </div>

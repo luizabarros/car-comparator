@@ -1,6 +1,6 @@
-"use client";
+'use client';
 
-import { useState, useEffect } from "react";
+import { useState, useEffect } from 'react';
 
 const TOAST_LIMIT = 1;
 
@@ -19,7 +19,7 @@ const toastStore = {
   getState: () => toastStore.state,
 
   setState: (nextState) => {
-    if (typeof nextState === "function") {
+    if (typeof nextState === 'function') {
       toastStore.state = nextState(toastStore.state);
     } else {
       toastStore.state = { ...toastStore.state, ...nextState };
@@ -42,9 +42,7 @@ export const toast = ({ ...props }) => {
   const update = (props) =>
     toastStore.setState((state) => ({
       ...state,
-      toasts: state.toasts.map((t) =>
-        t.id === id ? { ...t, ...props } : t
-      ),
+      toasts: state.toasts.map((t) => (t.id === id ? { ...t, ...props } : t)),
     }));
 
   const dismiss = () =>

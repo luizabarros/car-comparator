@@ -7,7 +7,7 @@ const nextConfig = {
     config.externals = [...config.externals, 'chrome'];
     return config;
   },
-  output: 'standalone'
-}
+  output: 'standalone',
+};
 
-module.exports = nextConfig
+module.exports = nextConfig;

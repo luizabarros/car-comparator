@@ -24,18 +24,14 @@ export default function ComparisonPage() {
   const [isComparing, setIsComparing] = useState(false);
 
   const handleUpdateSlot = (id: number, field: string, value: any) => {
-    setSlots(prev =>
-      prev.map(slot =>
-        slot.id === id ? { ...slot, [field]: value } : slot
-      )
-    );
+    setSlots((prev) => prev.map((slot) => (slot.id === id ? { ...slot, [field]: value } : slot)));
   };
 
   const handleCompare = async () => {
     setComparisonHTML(null);
     setPriceHistoryCars([]);
 
-    const filledSlots = slots.filter(s => s.data);
+    const filledSlots = slots.filter((s) => s.data);
 
     if (filledSlots.length < 2) {
       toast({
@@ -50,9 +46,7 @@ export default function ComparisonPage() {
 
     try {
       // Formata os carros no padrão esperado pela API: "Modelo, Ano"
-      const selectedCars = filledSlots.map(
-        s => `${s.data.Modelo}, ${s.data.AnoModelo}`
-      );
+      const selectedCars = filledSlots.map((s) => `${s.data.Modelo}, ${s.data.AnoModelo}`);
 
       console.log('🚗 Enviando para API:', selectedCars);
 
@@ -84,12 +78,12 @@ export default function ComparisonPage() {
 
       // Busca histórico de preços FIPE para cada carro
       const carsWithHistory = await Promise.all(
-        filledSlots.map(async slot => {
+        filledSlots.map(async (slot) => {
           try {
             const historyResponse = await fipeService.getCarHistory(
               slot.data.MarcaCodigo,
               slot.data.ModeloCodigo,
-              slot.data.AnoCodigo
+              slot.data.AnoCodigo,
             );
 
             return {
@@ -103,24 +97,22 @@ export default function ComparisonPage() {
               priceHistory: [],
             };
           }
-        })
+        }),
       );
 
-      setPriceHistoryCars(carsWithHistory.filter(car => car.priceHistory.length > 0));
+      setPriceHistoryCars(carsWithHistory.filter((car) => car.priceHistory.length > 0));
 
       toast({
         title: 'Comparação realizada!',
         description: `${filledSlots.length} veículos comparados com sucesso.`,
         variant: 'default',
       });
-
     } catch (err) {
       console.error('❌ Erro na comparação:', err);
-      
+
       toast({
         title: 'Erro na comparação',
-        description:
-          err instanceof Error ? err.message : 'Erro desconhecido',
+        description: err instanceof Error ? err.message : 'Erro desconhecido',
         variant: 'destructive',
       });
     } finally {
@@ -138,21 +130,18 @@ export default function ComparisonPage() {
       return;
     }
 
-    setSlots(prev => [
-      ...prev,
-      { id: nextId, data: null, loading: false },
-    ]);
+    setSlots((prev) => [...prev, { id: nextId, data: null, loading: false }]);
 
-    setNextId(id => id + 1);
+    setNextId((id) => id + 1);
   };
 
   const removeSlot = (id: number) => {
     if (slots.length <= 1) return;
-    setSlots(prev => prev.filter(slot => slot.id !== id));
+    setSlots((prev) => prev.filter((slot) => slot.id !== id));
   };
 
-  const activeCarsCount = slots.filter(s => s.data).length;
-  const isLoadingAny = slots.some(s => s.loading) || isComparing;
+  const activeCarsCount = slots.filter((s) => s.data).length;
+  const isLoadingAny = slots.some((s) => s.loading) || isComparing;
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-slate-50 to-slate-100">
@@ -168,9 +157,7 @@ export default function ComparisonPage() {
               <Car className="w-5 h-5 text-white" />
             </div>
             <div>
-              <h1 className="text-xl font-bold text-slate-900">
-                Comparador Inteligente
-              </h1>
+              <h1 className="text-xl font-bold text-slate-900">Comparador Inteligente</h1>
               <p className="text-xs text-slate-600 hidden sm:block">
                 Compare até 4 veículos com análise de IA
               </p>
@@ -195,10 +182,10 @@ export default function ComparisonPage() {
             slots.length === 1
               ? 'grid-cols-1 max-w-xl mx-auto'
               : slots.length === 2
-              ? 'grid-cols-1 lg:grid-cols-2'
-              : slots.length === 3
-              ? 'grid-cols-1 lg:grid-cols-3'
-              : 'grid-cols-1 md:grid-cols-2 xl:grid-cols-4'
+                ? 'grid-cols-1 lg:grid-cols-2'
+                : slots.length === 3
+                  ? 'grid-cols-1 lg:grid-cols-3'
+                  : 'grid-cols-1 md:grid-cols-2 xl:grid-cols-4'
           }`}
         >
           <AnimatePresence mode="popLayout">
@@ -213,17 +200,9 @@ export default function ComparisonPage() {
                 <CarSelector
                   id={slot.id}
                   carNumber={index + 1}
-                  onCarDataChange={data =>
-                    handleUpdateSlot(slot.id, 'data', data)
-                  }
-                  onLoadingChange={loading =>
-                    handleUpdateSlot(slot.id, 'loading', loading)
-                  }
-                  onRemove={
-                    slots.length > 1
-                      ? () => removeSlot(slot.id)
-                      : null
-                  }
+                  onCarDataChange={(data) => handleUpdateSlot(slot.id, 'data', data)}
+                  onLoadingChange={(loading) => handleUpdateSlot(slot.id, 'loading', loading)}
+                  onRemove={slots.length > 1 ? () => removeSlot(slot.id) : null}
                 />
               </motion.div>
             ))}
@@ -260,11 +239,10 @@ export default function ComparisonPage() {
             <div className="flex items-center gap-4">
               <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600"></div>
               <div>
-                <h3 className="font-semibold text-blue-900">
-                  Processando análise com IA...
-                </h3>
+                <h3 className="font-semibold text-blue-900">Processando análise com IA...</h3>
                 <p className="text-sm text-blue-700">
-                  Buscando informações, extraindo dados e gerando comparativo. Isso pode levar até 30 segundos.
+                  Buscando informações, extraindo dados e gerando comparativo. Isso pode levar até
+                  30 segundos.
                 </p>
               </div>
             </div>
@@ -305,7 +283,8 @@ export default function ComparisonPage() {
               Comece sua comparação inteligente
             </h2>
             <p className="text-slate-600 max-w-md mx-auto mb-4">
-              Selecione marca, modelo e ano nos cartões acima. Nossa IA buscará informações na web e gerará um relatório completo.
+              Selecione marca, modelo e ano nos cartões acima. Nossa IA buscará informações na web e
+              gerará um relatório completo.
             </p>
             <p className="text-sm text-slate-500">
               ✨ Análise com IA • 📊 Dados FIPE • 🔍 Busca na web

@@ -1,27 +1,21 @@
-"use client";
+'use client';
 
-import { useState, useEffect } from "react";
-import { motion } from "framer-motion";
-import { Car, ChevronDown, Loader2, X } from "lucide-react";
-import { Label } from "@radix-ui/react-label";
-import { fipeService } from "../services/fipe.service";
-import { useToast } from "./UseToast";
-import { Button } from "./Button";
+import { useState, useEffect } from 'react';
+import { motion } from 'framer-motion';
+import { Car, ChevronDown, Loader2, X } from 'lucide-react';
+import { Label } from '@radix-ui/react-label';
+import { fipeService } from '../services/fipe.service';
+import { useToast } from './UseToast';
+import { Button } from './Button';
 
-export default function CarSelector({
-  id,
-  carNumber,
-  onCarDataChange,
-  onLoadingChange,
-  onRemove
-}) {
+export default function CarSelector({ id, carNumber, onCarDataChange, onLoadingChange, onRemove }) {
   const [brands, setBrands] = useState([]);
   const [models, setModels] = useState([]);
   const [years, setYears] = useState([]);
 
-  const [selectedBrand, setSelectedBrand] = useState("");
-  const [selectedModel, setSelectedModel] = useState("");
-  const [selectedYear, setSelectedYear] = useState("");
+  const [selectedBrand, setSelectedBrand] = useState('');
+  const [selectedModel, setSelectedModel] = useState('');
+  const [selectedYear, setSelectedYear] = useState('');
 
   const [loadingBrands, setLoadingBrands] = useState(false);
   const [loadingModels, setLoadingModels] = useState(false);
@@ -47,9 +41,9 @@ export default function CarSelector({
       setBrands(data);
     } catch {
       toast({
-        title: "Erro ao carregar marcas",
-        description: "Tente novamente.",
-        variant: "destructive",
+        title: 'Erro ao carregar marcas',
+        description: 'Tente novamente.',
+        variant: 'destructive',
       });
     } finally {
       setLoadingBrands(false);
@@ -60,8 +54,8 @@ export default function CarSelector({
     setLoadingModels(true);
     setModels([]);
     setYears([]);
-    setSelectedModel("");
-    setSelectedYear("");
+    setSelectedModel('');
+    setSelectedYear('');
     onCarDataChange(null);
 
     try {
@@ -69,9 +63,9 @@ export default function CarSelector({
       setModels(data.modelos || []);
     } catch {
       toast({
-        title: "Erro ao carregar modelos",
-        description: "Tente novamente.",
-        variant: "destructive",
+        title: 'Erro ao carregar modelos',
+        description: 'Tente novamente.',
+        variant: 'destructive',
       });
     } finally {
       setLoadingModels(false);
@@ -81,7 +75,7 @@ export default function CarSelector({
   const loadYears = async (brandCode, modelCode) => {
     setLoadingYears(true);
     setYears([]);
-    setSelectedYear("");
+    setSelectedYear('');
     onCarDataChange(null);
 
     try {
@@ -89,9 +83,9 @@ export default function CarSelector({
       setYears(data);
     } catch {
       toast({
-        title: "Erro ao carregar anos",
-        description: "Tente novamente.",
-        variant: "destructive",
+        title: 'Erro ao carregar anos',
+        description: 'Tente novamente.',
+        variant: 'destructive',
       });
     } finally {
       setLoadingYears(false);
@@ -102,17 +96,13 @@ export default function CarSelector({
     setLoadingDetails(true);
 
     try {
-      const data = await fipeService.getCarDetails(
-        brandCode,
-        modelCode,
-        yearCode
-      );
+      const data = await fipeService.getCarDetails(brandCode, modelCode, yearCode);
       onCarDataChange(data);
     } catch {
       toast({
-        title: "Erro ao carregar detalhes",
-        description: "Tente novamente.",
-        variant: "destructive",
+        title: 'Erro ao carregar detalhes',
+        description: 'Tente novamente.',
+        variant: 'destructive',
       });
       onCarDataChange(null);
     } finally {
@@ -128,8 +118,8 @@ export default function CarSelector({
     } else {
       setModels([]);
       setYears([]);
-      setSelectedModel("");
-      setSelectedYear("");
+      setSelectedModel('');
+      setSelectedYear('');
       onCarDataChange(null);
     }
   };
@@ -141,7 +131,7 @@ export default function CarSelector({
       loadYears(selectedBrand, value);
     } else {
       setYears([]);
-      setSelectedYear("");
+      setSelectedYear('');
       onCarDataChange(null);
     }
   };
@@ -168,9 +158,7 @@ export default function CarSelector({
             <Car className="w-5 h-5 text-blue-600" />
           </div>
           <div>
-            <h2 className="text-lg font-bold text-slate-900">
-              Veículo {carNumber}
-            </h2>
+            <h2 className="text-lg font-bold text-slate-900">Veículo {carNumber}</h2>
             <p className="text-xs text-slate-600">Selecione as opções</p>
           </div>
         </div>
@@ -281,9 +269,7 @@ export default function CarSelector({
         <div className="absolute inset-0 bg-white/80 backdrop-blur-sm rounded-2xl flex items-center justify-center z-10">
           <div className="flex flex-col items-center gap-2">
             <Loader2 className="w-8 h-8 animate-spin text-blue-600" />
-            <span className="text-sm font-medium text-blue-600">
-              Carregando detalhes...
-            </span>
+            <span className="text-sm font-medium text-blue-600">Carregando detalhes...</span>
           </div>
         </div>
       )}

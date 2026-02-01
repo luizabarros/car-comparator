@@ -1,12 +1,13 @@
-import type { Metadata } from "next";
-import "./globals.css";
-import { Inter } from 'next/font/google'
+import type { Metadata } from 'next';
+import './globals.css';
+import { Inter } from 'next/font/google';
 
-const inter = Inter({ subsets: ['latin'] })
+const inter = Inter({ subsets: ['latin'] });
 
 export const metadata: Metadata = {
-  title: "MeuCarroIdeal",
-  description: "Encontre o carro perfeito para você com MeuCarroIdeal - sua plataforma confiável para comparar, avaliar e escolher veículos que atendem às suas necessidades e estilo de vida.",
+  title: 'MeuCarroIdeal',
+  description:
+    'Encontre o carro perfeito para você com MeuCarroIdeal - sua plataforma confiável para comparar, avaliar e escolher veículos que atendem às suas necessidades e estilo de vida.',
 };
 
 export default function RootLayout({
@@ -16,9 +17,7 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="pt-BR">
-      <body className={`${inter.className} antialiased`}>
-        {children}
-      </body>
+      <body className={`${inter.className} antialiased`}>{children}</body>
     </html>
   );
 }

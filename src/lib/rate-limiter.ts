@@ -18,7 +18,9 @@ async function connectRedis(retries = 5, delay = 2000): Promise<void> {
       return;
     } catch (err: any) {
       retries--;
-      console.warn(`⚠ Falha ao conectar no Redis (${err.message}). Tentando novamente (${retries} restantes)...`);
+      console.warn(
+        `⚠ Falha ao conectar no Redis (${err.message}). Tentando novamente (${retries} restantes)...`,
+      );
       await new Promise((resolve) => setTimeout(resolve, delay));
     }
   }

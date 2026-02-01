@@ -15,11 +15,15 @@ interface ComparisonCardsProps {
 
 export default function ComparisonCards({ slots }: ComparisonCardsProps) {
   const getGridClass = (count: number) => {
-    switch(count) {
-      case 1: return "grid-cols-1 max-w-xl mx-auto";
-      case 2: return "grid-cols-1 lg:grid-cols-2";
-      case 3: return "grid-cols-1 lg:grid-cols-3";
-      default: return "grid-cols-1 md:grid-cols-2 xl:grid-cols-4";
+    switch (count) {
+      case 1:
+        return 'grid-cols-1 max-w-xl mx-auto';
+      case 2:
+        return 'grid-cols-1 lg:grid-cols-2';
+      case 3:
+        return 'grid-cols-1 lg:grid-cols-3';
+      default:
+        return 'grid-cols-1 md:grid-cols-2 xl:grid-cols-4';
     }
   };
 
@@ -44,7 +48,9 @@ export default function ComparisonCards({ slots }: ComparisonCardsProps) {
             <Tag className="w-8 h-8 text-slate-400" />
           </div>
           <p className="text-slate-900 font-semibold mb-1">Aguardando seleção</p>
-          <p className="text-slate-500 text-sm">Selecione um veículo no painel acima para ver os detalhes</p>
+          <p className="text-slate-500 text-sm">
+            Selecione um veículo no painel acima para ver os detalhes
+          </p>
         </div>
       );
     }
@@ -52,7 +58,9 @@ export default function ComparisonCards({ slots }: ComparisonCardsProps) {
     return (
       <div className="bg-white rounded-2xl shadow-lg border border-slate-200 overflow-hidden hover:shadow-xl transition-shadow flex flex-col h-full">
         <div className="bg-gradient-to-br from-blue-600 to-blue-700 p-6">
-          <h3 className="text-2xl font-bold text-white mb-1 leading-tight">{car.Marca} {car.Modelo}</h3>
+          <h3 className="text-2xl font-bold text-white mb-1 leading-tight">
+            {car.Marca} {car.Modelo}
+          </h3>
           <p className="text-blue-100 text-sm">{car.AnoModelo}</p>
         </div>
 

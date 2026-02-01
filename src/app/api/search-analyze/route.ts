@@ -1,15 +1,15 @@
-export const dynamic = 'force-dynamic';
-export const runtime = 'nodejs';
-export const preferredRegion = 'auto';
-export const dynamicParams = true;
-export const fetchCache = 'force-no-store';
-export const revalidate = 0;
+export const dynamic = 'force-dynamic'
+export const runtime = 'nodejs'
+export const preferredRegion = 'auto'
+export const dynamicParams = true
+export const fetchCache = 'force-no-store'
+export const revalidate = 0
 
 import { NextRequest, NextResponse } from 'next/server';
 import { Analyzer } from '../../../lib/analyzer';
-import { AnalyzedCar, CarData, CarItem, ProcessedURLs, SearchResult } from '@/types/car';
-import { SearchAPI } from '@/lib/search';
-import { HTMLGenerator } from '@/lib/html-generator';
+import { AnalyzedCar, CarData, CarItem, ProcessedURLs, SearchFilterResult, SearchResult } from '@/types/car'
+import { SearchAPI } from '@/lib/search'
+import { HTMLGenerator } from '@/lib/html-generator'
 
 const ANALYSIS_TIMEOUT_PER_CAR = 60000;
 const SEARCH_TIMEOUT_PER_CAR = 30000;
@@ -19,14 +19,16 @@ const EXTRA_COMPARISON_PER_CAR = 15000;
 function withTimeout<T>(promise: Promise<T>, timeoutMs: number, errorMessage: string): Promise<T> {
   return Promise.race([
     promise,
-    new Promise<T>((_, reject) => setTimeout(() => reject(new Error(errorMessage)), timeoutMs)),
+    new Promise<T>((_, reject) =>
+      setTimeout(() => reject(new Error(errorMessage)), timeoutMs)
+    ),
   ]);
 }
 
 class ParseFilter {
   async process(carItems: string[]): Promise<CarItem[]> {
     return carItems.map((item) => {
-      const [carModel, yearStr] = item.split(',').map((s) => s.trim());
+      const [carModel, yearStr] = item.split(',').map(s => s.trim());
       const year = yearStr ? Number(yearStr) : undefined;
 
       if (!carModel) {
@@ -39,15 +41,15 @@ class ParseFilter {
 }
 
 class SearchFilter {
-  async process(carItems: CarItem[]): Promise<SearchResult[]> {
-    const results = await Promise.allSettled(
+  async process(carItems: CarItem[]): Promise<SearchFilterResult[]> {
+    return await Promise.all(
       carItems.map(async (item) => {
         console.log(`🔍 Buscando URLs para: ${item.carModel} ${item.year || ''}`);
-
+        
         const searchResults = await withTimeout(
           SearchAPI.searchCarSites(item.carModel, item.year),
           SEARCH_TIMEOUT_PER_CAR,
-          `Search timeout for ${item.carModel}`,
+          `Search timeout for ${item.carModel}`
         );
 
         if (!searchResults || searchResults.length === 0) {
@@ -59,33 +61,31 @@ class SearchFilter {
 
         return {
           ...item,
-          searchResults,
+          searchResults
         };
-      }),
+      })
     );
-
-    return results
-      .filter((r): r is PromiseFulfilledResult<SearchResult> => r.status === 'fulfilled')
-      .map((r) => r.value);
   }
 }
 
 class URLProcessingFilter {
-  async process(searchResults: SearchResult[]): Promise<ProcessedURLs[]> {
+  async process(searchResults: SearchFilterResult[]): Promise<ProcessedURLs[]> {
     return Promise.all(
       searchResults.map(async (result) => {
         const organicUrls = result.searchResults
-          .filter((r) => r.type === 'organic' && r.link)
-          .map((r) => r.link)
+          .filter(r => r.type === 'organic' && r.link)
+          .map(r => r.link)
           .slice(0, 10);
 
-        const reclameAquiResults = result.searchResults.filter(
-          (r) => r.type === 'organic' && r.link && r.link.includes('reclameaqui.com.br'),
+        const reclameAquiResults = result.searchResults.filter(r => 
+          r.type === 'organic' && 
+          r.link && 
+          r.link.includes('reclameaqui.com.br')
         );
 
-        const imageResults = result.searchResults.filter((r) => r.type === 'image');
+        const imageResults = result.searchResults.filter(r => r.type === 'image');
 
-        const dealershipResults = result.searchResults.filter((r) => r.type === 'local');
+        const dealershipResults = result.searchResults.filter(r => r.type === 'local');
 
         return {
           carModel: result.carModel,
@@ -95,28 +95,33 @@ class URLProcessingFilter {
           reclameAquiResults,
           imageResults,
           dealershipResults,
-          allSearchResults: result.searchResults,
+          allSearchResults: result.searchResults
         };
-      }),
+      })
     );
   }
 }
 
 class LLMExtractionFilter {
   async process(processedURLs: ProcessedURLs[]): Promise<AnalyzedCar[]> {
-    const results = await Promise.allSettled(
+    return await Promise.all(
       processedURLs.map(async (item) => {
         console.log(`🤖 Extraindo dados via LLM para: ${item.carModel}`);
-
+        
         const carData = await withTimeout(
-          Analyzer.extractCarDataFromURLs(item.organicUrls, item.carModel, item.year, {
-            organic: item.allSearchResults.filter((r) => r.type === 'organic'),
-            reclameaqui: item.reclameAquiResults,
-            images: item.imageResults,
-            dealerships: item.dealershipResults,
-          }),
+          Analyzer.extractCarDataFromURLs(
+            item.organicUrls,
+            item.carModel,
+            item.year,
+            {
+              organic: item.allSearchResults.filter(r => r.type === 'organic'),
+              reclameaqui: item.reclameAquiResults,
+              images: item.imageResults,
+              dealerships: item.dealershipResults
+            }
+          ),
           ANALYSIS_TIMEOUT_PER_CAR,
-          `LLM analysis timeout for ${item.carModel}`,
+          `LLM analysis timeout for ${item.carModel}`
         );
 
         console.log(`✅ Dados extraídos com sucesso: ${item.carModel}`);
@@ -125,25 +130,10 @@ class LLMExtractionFilter {
           carModel: item.carModel,
           year: item.year,
           originalInput: item.originalInput,
-          data: carData,
+          data: carData
         };
-      }),
+      })
     );
-
-    return results.map((r, index) => {
-      if (r.status === 'fulfilled') {
-        return r.value;
-      } else {
-        const item = processedURLs[index];
-        return {
-          carModel: item.carModel,
-          year: item.year,
-          originalInput: item.originalInput,
-          data: null,
-          error: r.reason.message,
-        };
-      }
-    });
   }
 }
 
@@ -165,7 +155,7 @@ class ComparisonFilter {
     const numCars = Object.keys(allCarsData).length;
 
     console.log(`📊 Gerando comparativo HTML para ${numCars} veículo(s)... (template)`);
-
+    
     const comparisonHTML = HTMLGenerator.generate(allCarsData);
 
     console.log(`✅ Comparativo gerado com sucesso em ~50ms!`);
@@ -188,14 +178,8 @@ class CarAnalysisPipeline {
     const searchResults = await this.searchFilter.process(parsedItems);
     const processedURLs = await this.urlProcessingFilter.process(searchResults);
     const analyzedCars = await this.llmExtractionFilter.process(processedURLs);
-
-    const successfulAnalyses = analyzedCars.filter((car) => car.data !== null);
-
-    console.log(`✅ ${successfulAnalyses.length} veículo(s) analisado(s) com sucesso`);
-
-    if (successfulAnalyses.length === 0) {
-      throw new Error('Failed to analyze any vehicle');
-    }
+    
+    console.log(`✅ ${analyzedCars.length} veículo(s) analisado(s) com sucesso`);
 
     const comparisonHTML = await this.comparisonFilter.process(analyzedCars);
 
@@ -209,21 +193,20 @@ class CarAnalysisPipeline {
 
     return {
       analyzedCars,
-      successfulAnalyses,
       allCarsData,
-      comparisonHTML,
+      comparisonHTML
     };
   }
 }
 
 export async function GET() {
-  return NextResponse.json({
+  return NextResponse.json({ 
     message: 'Use POST to run search + AI analysis',
     usage: {
       method: 'POST',
-      body: '["Toyota Corolla, 2020", "Honda Civic, 2021"]',
-    },
-  });
+      body: '["Toyota Corolla, 2020", "Honda Civic, 2021"]'
+    }
+  })
 }
 
 export async function POST(request: NextRequest) {
@@ -231,48 +214,45 @@ export async function POST(request: NextRequest) {
     const carItems: string[] = await request.json();
 
     if (!Array.isArray(carItems) || carItems.length === 0) {
-      return NextResponse.json(
-        {
-          error: 'Array of car items is required',
-          example: '["Toyota Corolla, 2020", "Honda Civic, 2021"]',
-        },
-        { status: 400 },
-      );
+      return NextResponse.json({ 
+        error: 'Array of car items is required',
+        example: '["Toyota Corolla, 2020", "Honda Civic, 2021"]'
+      }, { status: 400 });
     }
 
     const numCars = carItems.length;
-
-    const totalTimeout =
-      Math.max(SEARCH_TIMEOUT_PER_CAR, ANALYSIS_TIMEOUT_PER_CAR) +
-      BASE_COMPARISON_TIMEOUT +
-      EXTRA_COMPARISON_PER_CAR * (numCars - 1) +
-      10000;
-
-    console.log(`⏱️ Timeout total para ${numCars} carro(s): ${totalTimeout / 1000}s`);
+    
+    const totalTimeout = Math.max(
+      SEARCH_TIMEOUT_PER_CAR,
+      ANALYSIS_TIMEOUT_PER_CAR
+    ) + BASE_COMPARISON_TIMEOUT + (EXTRA_COMPARISON_PER_CAR * (numCars - 1)) + 10000;
+    
+    console.log(`⏱️ Timeout total para ${numCars} carro(s): ${totalTimeout/1000}s`);
 
     const pipeline = new CarAnalysisPipeline();
-
+    
     const result = await withTimeout(
       pipeline.execute(carItems),
       totalTimeout,
-      `Total request timeout exceeded for ${numCars} cars`,
+      `Total request timeout exceeded for ${numCars} cars`
     );
 
     return NextResponse.json({
       success: true,
       totalVehicles: carItems.length,
-      analyzedVehicles: result.successfulAnalyses.length,
+      analyzedVehicles: carItems.length,
       data: result.allCarsData,
-      comparisonHTML: result.comparisonHTML,
+      comparisonHTML: result.comparisonHTML
     });
+
   } catch (error) {
     console.error('❌ Search-Analyze error:', error);
     return NextResponse.json(
-      {
-        error: 'Internal server error',
-        details: error instanceof Error ? error.message : 'Unknown error',
+      { 
+        error: 'Internal server error', 
+        details: error instanceof Error ? error.message : 'Unknown error' 
       },
-      { status: 500 },
+      { status: 500 }
     );
   }
 }

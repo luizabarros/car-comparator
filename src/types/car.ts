@@ -139,6 +139,13 @@ export interface SearchResult {
   hours?: string;
 }
 
+export interface SearchFilterResult {
+  carModel: string;
+  year?: number;
+  originalInput: string;
+  searchResults: any[];
+}
+
 export interface APIResponse {
   success: boolean;
   totalVehicles: number;

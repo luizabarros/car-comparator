@@ -55,17 +55,32 @@ export async function POST(request: NextRequest) {
 
         console.log(`✅ Encontradas ${searchResults.length} URLs para ${carModel}`);
 
-        const urls = searchResults
+        const organicUrls = searchResults
           .filter(r => r.type === 'organic' && r.link)
           .map(r => r.link)
           .slice(0, 10);
 
+        const reclameAquiResults = searchResults.filter(r => 
+          r.type === 'organic' && 
+          r.link && 
+          r.link.includes('reclameaqui.com.br')
+        );
+
+        const imageResults = searchResults.filter(r => r.type === 'image');
+
+        const dealershipResults = searchResults.filter(r => r.type === 'local');
+
         console.log(`🤖 Extraindo dados via LLM para: ${carModel}`);
         const carData = await LLMAnalyzer.extractCarDataFromURLs(
-          urls,
+          organicUrls,
           carModel,
           year,
-          searchResults
+          {
+            organic: searchResults.filter(r => r.type === 'organic'),
+            reclameaqui: reclameAquiResults,
+            images: imageResults,
+            dealerships: dealershipResults
+          }
         );
 
         const key = year ? `${carModel},${year}` : carModel;

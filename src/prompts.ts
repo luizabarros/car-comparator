@@ -149,6 +149,12 @@ Você é um especialista em análise automotiva com acesso a web search. Sua fun
     "total": number | null,
     "media": number | null
   },
+  "imagens": [
+    {
+      "link": string,
+      "imageUrl": string
+    }
+  ],
   "reclamacoes": [
     {
       "titulo": string,

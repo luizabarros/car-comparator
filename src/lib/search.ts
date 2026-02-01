@@ -68,7 +68,7 @@ export class SearchAPI {
 
         case 'google_local':
           const localResults = data.local_results || [];
-          allResults.push(...localResults.map((item: any) => ({
+          allResults.push(...localResults.slice(0, 5).map((item: any) => ({
             title: item.title || '',
             link: item.links?.website || '',
             snippet: item.description || '',
@@ -83,7 +83,7 @@ export class SearchAPI {
         case 'google':
         default:
           const organicResults = data.organic_results || [];
-          allResults.push(...organicResults.map((item: any) => ({
+          allResults.push(...organicResults.slice(0, 10).map((item: any) => ({
             title: item.title || '',
             link: item.link || '',
             snippet: item.snippet || '',

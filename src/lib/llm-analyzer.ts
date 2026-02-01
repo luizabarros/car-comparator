@@ -15,6 +15,16 @@ interface SearchResult {
   title?: string;
   snippet?: string;
   type?: string;
+  imageUrl?: string;
+  phone?: string;
+  address?: string;
+}
+
+interface CategorizedSearchResults {
+  organic: SearchResult[];
+  reclameaqui: SearchResult[];
+  images: SearchResult[];
+  dealerships: SearchResult[];
 }
 
 export class LLMAnalyzer {
@@ -22,7 +32,7 @@ export class LLMAnalyzer {
     urls: string[],
     carModel: string,
     year?: number,
-    searchResults?: SearchResult[]
+    categorizedResults?: CategorizedSearchResults
   ): Promise<CarData> {
     
     const cacheKey = `openai_extract:${carModel}:${year}:${crypto
@@ -43,48 +53,69 @@ export class LLMAnalyzer {
       const carInfo = year ? `${carModel} ${year}` : carModel;
       
       const userPrompt = `
-      Analise as seguintes URLs sobre o **${carInfo}** e extraia TODAS as informações disponíveis:
+      Analise as seguintes informações sobre o **${carInfo}** e extraia TODAS as informações disponíveis:
 
-      **URLs para análise:**
+      **URLs de Fichas Técnicas:**
       ${urls.map((url, i) => `${i + 1}. ${url}`).join('\n')}
 
-      ${searchResults ? `\n**Contexto adicional dos resultados de busca:**\n${searchResults.map(r => `- ${r.title}: ${r.snippet}`).slice(0, 5).join('\n')}` : ''}
+      ${categorizedResults?.reclameaqui && categorizedResults.reclameaqui.length > 0 ? `
+      **Reclamações do Reclame Aqui:**
+      ${categorizedResults.reclameaqui.map((r, i) => `${i + 1}. ${r.link}\n   Título: ${r.title}\n   Resumo: ${r.snippet}`).join('\n')}
+      ` : ''}
+
+      ${categorizedResults?.images && categorizedResults.images.length > 0 ? `
+      **Imagens Disponíveis:**
+      ${categorizedResults.images.map((img, i) => `${i + 1}. ${img.imageUrl}`).join('\n')}
+      ` : ''}
+
+      ${categorizedResults?.dealerships && categorizedResults.dealerships.length > 0 ? `
+      **Concessionárias:**
+      ${categorizedResults.dealerships.map((d, i) => `${i + 1}. ${d.title}\n   Endereço: ${d.address}\n   Telefone: ${d.phone}\n   Site: ${d.link}`).join('\n')}
+      ` : ''}
 
       **INSTRUÇÕES IMPORTANTES:**
 
-      1. **Visite e analise cada URL** usando web search para obter informações reais e atualizadas
-      2. **Preencha TODOS os campos** do JSON de resposta
-      3. Para campos não encontrados, use \`null\`
-      4. **Nunca invente dados** - se não encontrar, deixe \`null\`
-      5. Padronize unidades: km/l, R$, mm, cv, kgfm, kWh, km/h
-      6. Para **reclamações do Reclame Aqui**, faça um **resumo geral do veredito** e liste até 5 reclamações principais
-      7. Para **concessionárias**, liste apenas as mais relevantes da região
+      1. **Visite e analise cada URL de ficha técnica** usando web search para obter informações reais e atualizadas
+      2. **Analise as reclamações do Reclame Aqui**:
+         - Acesse cada link fornecido
+         - Faça um resumo geral das principais reclamações
+         - Identifique os problemas mais recorrentes
+         - Salve os links das reclamações mais relevantes (até 5) para referência
+      3. **Salve as URLs das imagens** fornecidas para uso posterior no HTML
+      4. **Salve os dados das concessionárias** com nome, endereço, telefone e site
+      5. **Preencha TODOS os campos** do JSON de resposta
+      6. Para campos não encontrados, use \`null\`
+      7. **Nunca invente dados** - se não encontrar, deixe \`null\`
+      8. Padronize unidades: km/l, R$, mm, cv, kgfm, kWh, km/h
 
       **Use web search** para complementar informações que não estiverem nas URLs fornecidas.
 
       Retorne APENAS o JSON no formato especificado, sem markdown ou explicações adicionais.
     `;
 
-      console.log(`🔄 Chamando OpenAI GPT-4 para: ${carInfo}`);
+      console.log(`🔄 Chamando OpenAI GPT-5.2 para: ${carInfo}`);
 
-      const completion = await openai.chat.completions.create({
-        model: "gpt-4-turbo-preview",
-        messages: [
-          {
-            role: "system",
-            content: SYSTEM_PROMPT_EXTRACTOR
-          },
-          {
-            role: "user",
-            content: userPrompt
+      const response = await openai.responses.create({
+        model: "gpt-5.2-2025-12-11",
+        instructions: SYSTEM_PROMPT_EXTRACTOR,
+        input: userPrompt,
+        tools: [{ type: "web_search" }],
+        text: {
+          format: {
+            type: "json_schema",
+            name: "car_data",
+            strict: true,
+            schema: {
+              type: "object",
+              properties: {},
+              additionalProperties: true
+            }
           }
-        ],
-        response_format: { type: "json_object" },
+        },
         temperature: 0.3,
-        max_tokens: 4096,
       });
 
-      const responseText = completion.choices[0].message.content || "{}";
+      const responseText = response.output_text || "{}";
       
       let carData: CarData;
       try {
@@ -97,7 +128,7 @@ export class LLMAnalyzer {
       carData.metadata = {
         sources: urls,
         extractedAt: new Date().toISOString(),
-        model: "gpt-4-turbo-preview"
+        model: "gpt-5.2-2025-12-11"
       };
 
       if (redisClient.isReady) {
@@ -127,7 +158,7 @@ export class LLMAnalyzer {
         metadata: {
           sources: urls,
           extractedAt: new Date().toISOString(),
-          model: "gpt-4-turbo-preview",
+          model: "gpt-5.2-2025-12-11",
           failed: true
         }
       } as any;
@@ -174,7 +205,7 @@ export class LLMAnalyzer {
         2. **Seções do Relatório**:
           
           **A) Header com Imagens**
-          - Mostre imagens dos carros lado a lado no topo (use as URLs das imagens dos dados, se disponíveis)
+          - Mostre imagens dos carros lado a lado no topo (use as URLs das imagens dos dados fornecidos)
           - Cards visuais com nome, ano e preço de cada carro
           
           **B) Tabelas Comparativas** (use cores para destacar)
@@ -191,13 +222,15 @@ export class LLMAnalyzer {
           - Avaliação de Proprietários
           
           **C) Reclamações (Reclame Aqui)**
-          - Resumo do veredito geral
+          - Resumo do veredito geral das reclamações
           - Lista de até 5 principais reclamações em cards
-          - Links clicáveis para cada reclamação
+          - Links clicáveis para cada reclamação (use os links fornecidos nos dados)
+          - Adicione badge "Fonte: Reclame Aqui" para credibilidade
           
           **D) Concessionárias Próximas**
-          - Cards com nome, cidade, site e contato
+          - Cards com nome, cidade, endereço, telefone e site
           - Ícones de telefone/localização
+          - Links clicáveis para os sites das concessionárias
           
           **E) Gráficos** (use Chart.js via CDN)
           - Gráfico de barras: Comparação de preços
@@ -220,27 +253,20 @@ export class LLMAnalyzer {
           - Se algum dado estiver \`null\`, mostre "N/D" ou "Não disponível"
           - Use \`<small>\` para notas técnicas
           - Evite jargões técnicos sem explicação
+          - **IMPORTANTE**: Mantenha TODOS os links de fontes clicáveis para aumentar credibilidade
 
         Retorne APENAS o HTML completo, pronto para uso.
       `;
 
-      const completion = await openai.chat.completions.create({
-        model: "gpt-4-turbo-preview",
-        messages: [
-          {
-            role: "system",
-            content: SYSTEM_PROMPT_COMPARATOR
-          },
-          {
-            role: "user",
-            content: userPrompt
-          }
-        ],
+      const response = await openai.responses.create({
+        model: "gpt-5.2-2025-12-11",
+        instructions: SYSTEM_PROMPT_COMPARATOR,
+        input: userPrompt,
+        tools: [{ type: "web_search" }],
         temperature: 0.7,
-        max_tokens: 8000,
       });
 
-      const htmlContent = completion.choices[0].message.content || "";
+      const htmlContent = response.output_text || "";
 
       let cleanHTML = htmlContent
         .replace(/```html\n?/g, '')

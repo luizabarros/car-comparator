@@ -1,6 +1,6 @@
 # 🚗 API de Comparação de Veículos com IA
 
-Sistema completo de análise e comparação de veículos utilizando Google Search + OpenAI GPT-4.
+Sistema completo de análise e comparação de veículos utilizando Google Search do SERP API + OpenAI GPT-5.2
 
 ## 📋 Índice
 
@@ -313,9 +313,9 @@ car-comparator/
 
 ## 🔧 APIs Utilizadas
 
-### 1. OpenAI GPT-4 Turbo
+### 1. OpenAI GPT-5.2
 
-**Modelo:** `gpt-4-turbo-preview`  
+**Modelo:** `gpt-5.2`  
 **Uso:**
 - Extração de dados estruturados
 - Geração de HTML comparativo
@@ -333,8 +333,7 @@ car-comparator/
 - Filtros por site, tipo (orgânico, local, imagens)
 
 **Custos:**
-- Plano gratuito: 100 buscas/mês
-- Plano pago: $50/mês (5.000 buscas)
+- Plano gratuito: 250 buscas por dia
 
 ### 3. Redis (Cache)
 
@@ -430,7 +429,7 @@ brew services start redis
 ### Argumentação Acadêmica
 
 **1. Justificativa da Arquitetura:**
-> "Optou-se por uma arquitetura híbrida que combina busca estruturada (SerpAPI) com análise contextual via LLM (GPT-4). Esta abordagem oferece maior robustez comparada ao web scraping tradicional, que é suscetível a bloqueios e mudanças de layout."
+> "Optou-se por uma arquitetura híbrida que combina busca estruturada (SerpAPI) com análise contextual via LLM (GPT-5.2). Esta abordagem oferece maior robustez comparada ao web scraping tradicional, que é suscetível a bloqueios e mudanças de layout."
 
 **2. Metodologia de Extração:**
 > "A extração de dados é realizada em duas etapas: (1) identificação de fontes relevantes via Google Custom Search do SERP API; (2) análise semântica do conteúdo via modelo de linguagem com capacidade de acesso web, garantindo interpretação contextual dos dados."

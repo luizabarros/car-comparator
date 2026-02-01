@@ -1,5 +1,5 @@
 async function compareCars(carItems: string[]) {
-  const res = await fetch('/api/search-scrape-analyze', {
+  const res = await fetch('/api/search-analyze', {
     method: 'POST',
     headers: {
       'Content-Type': 'application/json',

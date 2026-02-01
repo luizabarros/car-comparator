@@ -14,7 +14,17 @@ export const carDataSchema = {
         garantia: { type: ["string", "null"] },
         ipva: { type: ["number", "null"] },
         seguro: { type: ["number", "null"] }
-      }
+      },
+      required: [
+        "fabricante",
+        "modelo",
+        "ano",
+        "versao",
+        "preco",
+        "garantia",
+        "ipva",
+        "seguro"
+      ]
     },
 
     motor: {
@@ -27,7 +37,15 @@ export const carDataSchema = {
         cilindrada: { type: ["string", "null"] },
         potencia_maxima: { type: ["number", "null"] },
         torque_maximo: { type: ["number", "null"] }
-      }
+      },
+      required: [
+        "propulsao",
+        "combustivel",
+        "cilindros",
+        "cilindrada",
+        "potencia_maxima",
+        "torque_maximo"
+      ]
     },
 
     transmissao: {
@@ -38,7 +56,13 @@ export const carDataSchema = {
         marchas: { type: ["string", "null"] },
         tracao: { type: ["string", "null"] },
         acoplamento: { type: ["string", "null"] }
-      }
+      },
+      required: [
+        "cambio",
+        "marchas",
+        "tracao",
+        "acoplamento"
+      ]
     },
 
     suspensao: {
@@ -48,7 +72,12 @@ export const carDataSchema = {
         dianteira: { type: ["string", "null"] },
         traseira: { type: ["string", "null"] },
         elemento_elastico: { type: ["string", "null"] }
-      }
+      },
+      required: [
+        "dianteira",
+        "traseira",
+        "elemento_elastico"
+      ]
     },
 
     freios: {
@@ -57,7 +86,11 @@ export const carDataSchema = {
       properties: {
         dianteiros: { type: ["string", "null"] },
         traseiros: { type: ["string", "null"] }
-      }
+      },
+      required: [
+        "dianteiros",
+        "traseiros"
+      ]
     },
 
     direcao: {
@@ -65,7 +98,8 @@ export const carDataSchema = {
       additionalProperties: false,
       properties: {
         tipo: { type: ["string", "null"] }
-      }
+      },
+      required: ["tipo"]
     },
 
     pneus: {
@@ -75,7 +109,12 @@ export const carDataSchema = {
         dianteiros: { type: ["string", "null"] },
         traseiros: { type: ["string", "null"] },
         estepe: { type: ["string", "null"] }
-      }
+      },
+      required: [
+        "dianteiros",
+        "traseiros",
+        "estepe"
+      ]
     },
 
     dimensoes: {
@@ -88,7 +127,15 @@ export const carDataSchema = {
         dist_entre_eixos: { type: ["number", "null"] },
         porta_malas: { type: ["number", "null"] },
         peso: { type: ["number", "null"] }
-      }
+      },
+      required: [
+        "comprimento",
+        "largura",
+        "altura",
+        "dist_entre_eixos",
+        "porta_malas",
+        "peso"
+      ]
     },
 
     desempenho: {
@@ -98,7 +145,12 @@ export const carDataSchema = {
         velocidade_max: { type: ["number", "null"] },
         aceleracao_0_100: { type: ["number", "null"] },
         frenagem_100_0: { type: ["number", "null"] }
-      }
+      },
+      required: [
+        "velocidade_max",
+        "aceleracao_0_100",
+        "frenagem_100_0"
+      ]
     },
 
     consumo: {
@@ -108,7 +160,12 @@ export const carDataSchema = {
         urbano: { type: ["number", "null"] },
         rodoviario: { type: ["number", "null"] },
         eletrico: { type: ["number", "null"] }
-      }
+      },
+      required: [
+        "urbano",
+        "rodoviario",
+        "eletrico"
+      ]
     },
 
     autonomia: {
@@ -118,7 +175,12 @@ export const carDataSchema = {
         urbana: { type: ["number", "null"] },
         rodoviaria: { type: ["number", "null"] },
         eletrica: { type: ["number", "null"] }
-      }
+      },
+      required: [
+        "urbana",
+        "rodoviaria",
+        "eletrica"
+      ]
     },
 
     avaliacao: {
@@ -131,7 +193,15 @@ export const carDataSchema = {
         protecao_pedestres: { type: ["number", "null"] },
         assistencia: { type: ["number", "null"] },
         concessionarias: { type: ["number", "null"] }
-      }
+      },
+      required: [
+        "ncap",
+        "protecao_adultos",
+        "protecao_criancas",
+        "protecao_pedestres",
+        "assistencia",
+        "concessionarias"
+      ]
     },
 
     historico_depreciacao: {
@@ -142,7 +212,8 @@ export const carDataSchema = {
         properties: {
           ano: { type: "number" },
           preco: { type: "number" }
-        }
+        },
+        required: ["ano", "preco"]
       }
     },
 
@@ -158,7 +229,14 @@ export const carDataSchema = {
         risco_manutencao: { type: ["string", "null"] },
         comparacao_preditiva: { type: ["string", "null"] },
         satisfacao_proprietarios: { type: ["string", "null"] }
-      }
+      },
+      required: [
+        "custo_total_propriedade",
+        "liquidez",
+        "risco_manutencao",
+        "comparacao_preditiva",
+        "satisfacao_proprietarios"
+      ]
     },
 
     opinioes: {
@@ -167,7 +245,8 @@ export const carDataSchema = {
       properties: {
         total: { type: ["number", "null"] },
         media: { type: ["number", "null"] }
-      }
+      },
+      required: ["total", "media"]
     },
 
     imagens: {
@@ -178,7 +257,8 @@ export const carDataSchema = {
         properties: {
           link: { type: "string" },
           imageUrl: { type: "string" }
-        }
+        },
+        required: ["link", "imageUrl"]
       }
     },
 
@@ -192,7 +272,8 @@ export const carDataSchema = {
           data: { type: "string" },
           descricao: { type: "string" },
           link: { type: "string" }
-        }
+        },
+        required: ["titulo", "data", "descricao", "link"]
       }
     },
 
@@ -210,8 +291,30 @@ export const carDataSchema = {
           cidade: { type: "string" },
           site: { type: ["string", "null"] },
           contato: { type: "string" }
-        }
+        },
+        required: ["nome", "cidade", "site", "contato"]
       }
     }
-  }
+  },
+  required: [
+    "informacoes_gerais",
+    "motor",
+    "transmissao",
+    "suspensao",
+    "freios",
+    "direcao",
+    "pneus",
+    "dimensoes",
+    "desempenho",
+    "consumo",
+    "autonomia",
+    "avaliacao",
+    "historico_depreciacao",
+    "analise_ia",
+    "opinioes",
+    "imagens",
+    "reclamacoes",
+    "reclamacoes_resumo",
+    "concessionarias_proximas"
+  ]
 };

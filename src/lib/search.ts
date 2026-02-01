@@ -58,7 +58,7 @@ export class SearchAPI {
       switch (params.engine) {
         case 'google_images':
           const imageResults = data.images_results || [];
-          allResults.push(...imageResults.slice(0, 3).map((item: any) => ({
+          allResults.push(...imageResults.slice(0, 2).map((item: any) => ({
             link: item.link || '',
             imageUrl: item.original || item.thumbnail,
             source: item.source,
@@ -83,7 +83,7 @@ export class SearchAPI {
         case 'google':
         default:
           const organicResults = data.organic_results || [];
-          allResults.push(...organicResults.slice(0, 10).map((item: any) => ({
+          allResults.push(...organicResults.slice(0, 3).map((item: any) => ({
             title: item.title || '',
             link: item.link || '',
             snippet: item.snippet || '',
@@ -111,17 +111,12 @@ export class SearchAPI {
     const searchPromises = [
       this.searchSerpAPI({
         engine: 'google',
-        q: `${searchTerm} ficha técnica site:olhonocarro.com.br OR site:shopcar.com.br OR site:carrodegaragem.com OR site:carroclub.com.br OR site:quatrorodas.com.br OR site:fichacompleta.com.br`
+        q: `${searchTerm} ficha técnica site:carrosnaweb.com.br OR site:olhonocarro.com.br OR site:shopcar.com.br OR site:carrodegaragem.com OR site:carroclub.com.br OR site:quatrorodas.com.br OR site:fichacompleta.com.br`
       }),
 
       this.searchSerpAPI({
         engine: 'google',
         q: `${searchTerm} site:reclameaqui.com.br`
-      }),
-      
-      this.searchSerpAPI({
-        engine: 'google',
-        q: `${searchTerm} problemas`
       }),
 
       this.searchSerpAPI({

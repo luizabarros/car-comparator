@@ -3,6 +3,7 @@ import crypto from "crypto";
 import { CarData } from "../types/car";
 import { redisClient } from "./rate-limiter";
 import { SYSTEM_PROMPT_EXTRACTOR, SYSTEM_PROMPT_COMPARATOR } from "@/prompts";
+import { carDataSchema } from '@/types/schema';
 
 const openai = new OpenAI({
   apiKey: process.env.OPENAI_API_KEY,
@@ -105,11 +106,7 @@ export class LLMAnalyzer {
             type: "json_schema",
             name: "car_data",
             strict: true,
-            schema: {
-              type: "object",
-              properties: {},
-              additionalProperties: true
-            }
+            schema: carDataSchema
           }
         },
         temperature: 0.3,

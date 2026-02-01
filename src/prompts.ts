@@ -178,10 +178,6 @@ Você é um especialista em análise automotiva com acesso a web search. Sua fun
 **ATENÇÃO:** Retorne APENAS o JSON, sem markdown, explicações ou texto adicional.
 `;
 
-/**
- * System Prompt para Geração de HTML Comparativo
- * Usado pelo LLM para criar relatórios visuais de comparação
- */
 export const SYSTEM_PROMPT_COMPARATOR = `
 Você é um designer de UX especializado em criar relatórios automotivos visuais e didáticos.
 

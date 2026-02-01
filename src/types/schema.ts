@@ -192,7 +192,6 @@ export const carDataSchema = {
         protecao_criancas: { type: ["number", "null"] },
         protecao_pedestres: { type: ["number", "null"] },
         assistencia: { type: ["number", "null"] },
-        concessionarias: { type: ["number", "null"] }
       },
       required: [
         "ncap",
@@ -239,26 +238,15 @@ export const carDataSchema = {
       ]
     },
 
-    opinioes: {
-      type: "object",
-      additionalProperties: false,
-      properties: {
-        total: { type: ["number", "null"] },
-        media: { type: ["number", "null"] }
-      },
-      required: ["total", "media"]
-    },
-
     imagens: {
       type: "array",
       items: {
         type: "object",
         additionalProperties: false,
         properties: {
-          link: { type: "string" },
           imageUrl: { type: "string" }
         },
-        required: ["link", "imageUrl"]
+        required: ["imageUrl"]
       }
     },
 
@@ -311,10 +299,16 @@ export const carDataSchema = {
     "avaliacao",
     "historico_depreciacao",
     "analise_ia",
-    "opinioes",
     "imagens",
     "reclamacoes",
     "reclamacoes_resumo",
     "concessionarias_proximas"
   ]
 };
+
+export const FIELDS_REQUIRING_WEB_SEARCH = [
+  'custo_total_propriedade',
+  'ipva', 
+  'seguro',
+  'avaliacao'
+];

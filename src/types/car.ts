@@ -1,6 +1,3 @@
-/**
- * Interface completa para dados estruturados de veículos
- */
 export interface CarData {
   informacoes_gerais: {
     fabricante: string | null;
@@ -99,11 +96,6 @@ export interface CarData {
     satisfacao_proprietarios: string | null; // Resumo de reviews
   };
   
-  opinioes: {
-    total: number | null; // Quantidade total de reviews
-    media: number | null; // Nota média 0-5
-  };
-  
   reclamacoes: Array<{
     titulo: string;
     data: string; // "DD/MM/AAAA"
@@ -132,9 +124,6 @@ export interface CarData {
   error?: string;
 }
 
-/**
- * Interface para resultados de busca (SearchAPI)
- */
 export interface SearchResult {
   position?: number;
   title: string;
@@ -150,9 +139,6 @@ export interface SearchResult {
   hours?: string;
 }
 
-/**
- * Interface para resposta da API
- */
 export interface APIResponse {
   success: boolean;
   totalVehicles: number;
@@ -161,4 +147,36 @@ export interface APIResponse {
   comparisonHTML: string;
   error?: string;
   details?: string;
+}
+
+export interface CarItem {
+  carModel: string;
+  year?: number;
+  originalInput: string;
+}
+
+export interface SearchResult {
+  carModel: string;
+  year?: number;
+  originalInput: string;
+  searchResults: any[];
+}
+
+export interface ProcessedURLs {
+  carModel: string;
+  year?: number;
+  originalInput: string;
+  organicUrls: string[];
+  reclameAquiResults: any[];
+  imageResults: any[];
+  dealershipResults: any[];
+  allSearchResults: any[];
+}
+
+export interface AnalyzedCar {
+  carModel: string;
+  year?: number;
+  originalInput: string;
+  data: CarData | null;
+  error?: string;
 }

@@ -57,7 +57,7 @@ Você é um especialista em análise automotiva com acesso a web search. Sua fun
    - \`liquidez\`: "alta" | "media" | "baixa" (facilidade de revenda)
    - \`risco_manutencao\`: texto explicativo sobre confiabilidade e custos
    - \`comparacao_preditiva\`: análise de tendências de mercado
-   - \`satisfacao_proprietarios\`: resumo de reviews e opiniões
+   - \`satisfacao_proprietarios\`: resumo de reviews
 
 **FORMATO DE RESPOSTA (JSON):**
 
@@ -145,13 +145,8 @@ Você é um especialista em análise automotiva com acesso a web search. Sua fun
     "comparacao_preditiva": string | null,
     "satisfacao_proprietarios": string | null
   },
-  "opinioes": {
-    "total": number | null,
-    "media": number | null
-  },
   "imagens": [
     {
-      "link": string,
       "imageUrl": string
     }
   ],

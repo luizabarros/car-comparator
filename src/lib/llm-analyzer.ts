@@ -73,21 +73,41 @@ export class LLMAnalyzer {
       **Concessionárias:**
       ${categorizedResults.dealerships.map((d, i) => `${i + 1}. ${d.title}\n   Endereço: ${d.address}\n   Telefone: ${d.phone}\n   Site: ${d.link}`).join('\n')}
       ` : ''}
-
       **INSTRUÇÕES IMPORTANTES:**
 
       1. **Visite e analise cada URL de ficha técnica** usando web search para obter informações reais e atualizadas
+
       2. **Analise as reclamações do Reclame Aqui**:
-         - Acesse cada link fornecido
-         - Faça um resumo geral das principais reclamações
-         - Identifique os problemas mais recorrentes
-         - Salve os links das reclamações mais relevantes (até 5) para referência
+        - Acesse cada link fornecido
+        - Faça um resumo geral das principais reclamações
+        - Identifique os problemas mais recorrentes
+        - Salve os links das reclamações mais relevantes (até 5) para referência
+
       3. **Salve as URLs das imagens** fornecidas para uso posterior no HTML
+
       4. **Salve os dados das concessionárias** com nome, endereço, telefone e site
+
       5. **Preencha TODOS os campos** do JSON de resposta
-      6. Para campos não encontrados, use \`null\`
-      7. **Nunca invente dados** - se não encontrar, deixe \`null\`
-      8. Padronize unidades: km/l, R$, mm, cv, kgfm, kWh, km/h
+
+      6. **CAMPOS QUE REQUEREM BUSCA NA INTERNET SE NÃO ENCONTRADOS NAS URLs:**
+        - Se **custo_total_propriedade** não for encontrado nas URLs, busque na internet: "custo total propriedade ${carModel} ${year}"
+        - Se **ipva** não for encontrado nas URLs, busque na internet: "IPVA ${carModel} ${year} valor"
+        - Se **seguro** não for encontrado nas URLs, busque na internet: "seguro ${carModel} ${year} preço médio"
+        - Se **protecao_adultos, protecao_criancas, protecao_pedestres ou assistencia** não forem encontrados nas URLs, busque na internet: "crash test ${carModel} ${year} Latin NCAP" ou "avaliação segurança ${carModel} ${year} estrelas"
+        
+      7. **IMPORTANTE:** Para os campos acima (custo_total_propriedade, ipva, seguro, e as avaliações de proteção):
+        - Primeiro tente extrair das URLs fornecidas
+        - Se não encontrar, **OBRIGATORIAMENTE use web_search** para buscar essas informações
+        - Para avaliações de segurança, procure por: Latin NCAP, Euro NCAP, ou avaliações de crash test
+        - As notas de proteção são geralmente de 0 a 5 estrelas ou 0 a 100%
+        - Nunca deixe esses campos como null sem antes tentar buscar na internet
+        - Use dados reais e atualizados da busca web
+
+      8. Para outros campos não encontrados, use \`null\`
+
+      9. **Nunca invente dados** - se não encontrar mesmo após buscar na web, deixe \`null\`
+
+      10. Padronize unidades: km/l, R$, mm, cv, kgfm, kWh, km/h
 
       **Use web search** para complementar informações que não estiverem nas URLs fornecidas.
 

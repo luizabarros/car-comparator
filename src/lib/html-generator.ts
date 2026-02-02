@@ -128,7 +128,6 @@ export class HTMLGenerator {
         <h1 class="text-5xl font-black text-transparent bg-clip-text bg-gradient-to-r from-blue-600 to-purple-600 mb-2">
           <i class="fas fa-car-side"></i> Comparação de Veículos
         </h1>
-        <p class="text-gray-600 text-sm">Análise completa gerada em {{timestamp}}</p>
       </div>
     </header>
 
@@ -200,7 +199,6 @@ export class HTMLGenerator {
     <!-- ANÁLISE EM LINGUAGEM HUMANA -->
     <div class="bg-gradient-to-r from-blue-50 via-purple-50 to-pink-50 border-l-4 border-blue-500 rounded-2xl shadow-lg p-8 mb-12">
       <div class="flex items-center mb-6">
-        <i class="fas fa-lightbulb text-yellow-500 text-4xl mr-4"></i>
         <div>
           <h3 class="text-3xl font-bold text-gray-900">💡 Análise Simplificada</h3>
           <p class="text-gray-600">Entenda a comparação em linguagem clara</p>
@@ -686,10 +684,6 @@ export class HTMLGenerator {
 
     <!-- FOOTER -->
     <footer class="text-center py-8 border-t border-gray-200">
-      <p class="text-gray-600 text-sm mb-2">
-        <i class="fas fa-info-circle mr-1"></i>
-        Relatório gerado automaticamente em {{timestamp}}
-      </p>
       <p class="text-xs text-gray-500">
         Dados obtidos de fontes públicas. Sempre confirme informações diretamente com concessionárias.
       </p>

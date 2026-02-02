@@ -155,7 +155,6 @@ export const carDataSchema = {
         'protecao_criancas',
         'protecao_pedestres',
         'assistencia',
-        'concessionarias',
       ],
     },
 

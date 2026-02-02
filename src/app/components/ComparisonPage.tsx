@@ -157,7 +157,7 @@ export default function ComparisonPage() {
               <Car className="w-5 h-5 text-white" />
             </div>
             <div>
-              <h1 className="text-xl font-bold text-slate-900">Comparador Inteligente</h1>
+              <h1 className="text-xl font-bold text-slate-900">MeuCarroIdeal</h1>
               <p className="text-xs text-slate-600 hidden sm:block">
                 Compare até 4 veículos com análise de IA
               </p>

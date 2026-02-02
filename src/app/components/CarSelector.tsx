@@ -197,10 +197,8 @@ export default function CarSelector({ id, carNumber, onCarDataChange, onLoadingC
             </select>
 
             <div className="absolute right-3 top-1/2 -translate-y-1/2 pointer-events-none">
-              {loadingBrands ? (
+              {loadingBrands && (
                 <Loader2 className="w-5 h-5 animate-spin text-slate-400" />
-              ) : (
-                <ChevronDown className="w-5 h-5 text-slate-400" />
               )}
             </div>
           </div>
@@ -226,10 +224,8 @@ export default function CarSelector({ id, carNumber, onCarDataChange, onLoadingC
             </select>
 
             <div className="absolute right-3 top-1/2 -translate-y-1/2 pointer-events-none">
-              {loadingModels ? (
+              {loadingModels && (
                 <Loader2 className="w-5 h-5 animate-spin text-slate-400" />
-              ) : (
-                <ChevronDown className="w-5 h-5 text-slate-400" />
               )}
             </div>
           </div>
@@ -255,10 +251,8 @@ export default function CarSelector({ id, carNumber, onCarDataChange, onLoadingC
             </select>
 
             <div className="absolute right-3 top-1/2 -translate-y-1/2 pointer-events-none">
-              {loadingYears ? (
+              {loadingYears && (
                 <Loader2 className="w-5 h-5 animate-spin text-slate-400" />
-              ) : (
-                <ChevronDown className="w-5 h-5 text-slate-400" />
               )}
             </div>
           </div>

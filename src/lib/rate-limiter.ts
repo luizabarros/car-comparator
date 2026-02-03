@@ -9,7 +9,6 @@ redisClient.on('error', (err) => {
   console.error('❌ Redis connection error:', err.message);
 });
 
-// Tentativa de conexão com retry
 async function connectRedis(retries = 5, delay = 2000): Promise<void> {
   while (retries > 0) {
     try {

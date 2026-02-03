@@ -10,6 +10,60 @@ export interface CarData {
     seguro: number | null;
   };
 
+  conforto: {
+    ar_condicionado: string | null;
+    direcao_eletrica: boolean | null;
+    vidros_eletricos: string | null;
+    travas_eletricas: boolean | null;
+    banco_motorista_ajuste_altura: boolean | null;
+    volante_ajuste_altura: boolean | null;
+    volante_ajuste_profundidade: boolean | null;
+    volante_multifuncional: boolean | null;
+    computador_bordo: boolean | null;
+    controle_cruzeiro: boolean | null;
+    sensor_chuva: boolean | null;
+    sensor_crepuscular: boolean | null;
+    retrovisor_fotocromatico: boolean | null;
+    banco_couro: boolean | null;
+    bancos_aquecidos: boolean | null;
+    bancos_ventilados: boolean | null;
+  };
+  
+  seguranca: {
+    airbags_motorista: boolean | null;
+    airbags_passageiro: boolean | null;
+    airbags_laterais: boolean | null;
+    airbags_cortina: boolean | null;
+    abs: boolean | null;
+    controle_tracao: boolean | null;
+    controle_estabilidade: boolean | null;
+    assistente_partida_rampa: boolean | null;
+    camera_re: boolean | null;
+    sensores_estacionamento_traseiro: boolean | null;
+    sensores_estacionamento_dianteiro: boolean | null;
+    alarme: boolean | null;
+    imobilizador: boolean | null;
+    controle_descida: boolean | null;
+    aviso_ponto_cego: boolean | null;
+    alerta_colisao_frontal: boolean | null;
+    frenagem_automatica_emergencia: boolean | null;
+    alerta_saida_faixa: boolean | null;
+  };
+
+  infotenimento: {
+    central_multimidia: string | null;
+    tela_touch: boolean | null;
+    tamanho_tela: string | null;
+    android_auto: boolean | null;
+    apple_carplay: boolean | null;
+    bluetooth: boolean | null;
+    usb: boolean | null;
+    comandos_volante: boolean | null;
+    sistema_som: string | null;
+    numero_alto_falantes: number | null;
+    navegacao_gps: boolean | null;
+  };
+
   motor: {
     propulsao: string | null; // "Dianteira", "Traseira", "4x4"
     combustivel: string | null; // "Gasolina", "Flex", "Diesel", "Elétrico", "Híbrido"

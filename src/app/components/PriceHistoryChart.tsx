@@ -22,17 +22,17 @@ ChartJS.register(
   Filler,
 );
 
-// Paleta de cores consistente
 const COLORS = [
-  { border: '#3B82F6', bg: 'rgba(59, 130, 246, 0.1)' }, // Blue
-  { border: '#10B981', bg: 'rgba(16, 185, 129, 0.1)' }, // Green
-  { border: '#F59E0B', bg: 'rgba(245, 158, 11, 0.1)' }, // Amber
-  { border: '#EF4444', bg: 'rgba(239, 68, 68, 0.1)' }, // Red
+  { border: '#3B82F6', bg: 'rgba(59, 130, 246, 0.1)' },
+  { border: '#10B981', bg: 'rgba(16, 185, 129, 0.1)' },
+  { border: '#F59E0B', bg: 'rgba(245, 158, 11, 0.1)' },
+  { border: '#EF4444', bg: 'rgba(239, 68, 68, 0.1)' },
 ];
 
 interface PriceHistoryChartProps {
   cars: Array<{
     model: string;
+    modelYear: number;
     priceHistory: Array<{
       month: string;
       price: string;
@@ -41,34 +41,62 @@ interface PriceHistoryChartProps {
 }
 
 export default function PriceHistoryChart({ cars }: PriceHistoryChartProps) {
-  // Valida se há dados
   if (!cars || cars.length === 0) {
     return null;
   }
 
-  // Extrai todos os meses únicos e ordena
+  const parseBRPrice = (price: string): number => {
+    const cleaned = price.replace(/[R$\s]/g, '').replace(/\./g, '').replace(',', '.');
+    return parseFloat(cleaned);
+  };
+
+  const parsePortugueseDate = (str: string) => {
+    const months: Record<string, number> = {
+      'janeiro': 0, 'fevereiro': 1, 'março': 2, 'abril': 3,
+      'maio': 4, 'junho': 5, 'julho': 6, 'agosto': 7,
+      'setembro': 8, 'outubro': 9, 'novembro': 10, 'dezembro': 11
+    };
+    
+    const match = str.match(/(\w+) de (\d{4})/);
+    if (!match) return new Date();
+    
+    const [, monthName, year] = match;
+    return new Date(parseInt(year), months[monthName.toLowerCase()] || 0);
+  };
+
   const allMonths = Array.from(
     new Set(cars.flatMap((c) => c.priceHistory.map((p) => p.month))),
   ).sort((a, b) => {
-    // Tenta converter para Date para ordenar corretamente
-    const dateA = new Date(a);
-    const dateB = new Date(b);
+    const dateA = parsePortugueseDate(a);
+    const dateB = parsePortugueseDate(b);
     return dateA.getTime() - dateB.getTime();
   });
 
-  // Cria datasets para cada carro
+  const formatMonth = (month: string) => {
+    const months: Record<string, string> = {
+      'janeiro': 'Jan', 'fevereiro': 'Fev', 'março': 'Mar', 'abril': 'Abr',
+      'maio': 'Mai', 'junho': 'Jun', 'julho': 'Jul', 'agosto': 'Ago',
+      'setembro': 'Set', 'outubro': 'Out', 'novembro': 'Nov', 'dezembro': 'Dez'
+    };
+    
+    const match = month.match(/(\w+) de (\d{4})/);
+    if (!match) return month;
+    
+    const [, monthName, year] = match;
+    return `${months[monthName.toLowerCase()]}/${year}`;
+  };
+
   const datasets = cars.map((car, index) => {
     const colorIndex = index % COLORS.length;
     const color = COLORS[colorIndex];
 
     return {
-      label: car.model,
+      label: `${car.model}`,
       data: allMonths.map((month) => {
         const entry = car.priceHistory.find((p) => p.month === month);
         if (!entry) return null;
 
-        // Remove formatação e converte para número
-        const numericPrice = Number(entry.price.replace(/[^0-9]/g, ''));
+        const numericPrice = parseBRPrice(entry.price);
         return isNaN(numericPrice) ? null : numericPrice;
       }),
       borderColor: color.border,
@@ -115,7 +143,7 @@ export default function PriceHistoryChart({ cars }: PriceHistoryChartProps) {
       <div className="w-full" style={{ height: '400px' }}>
         <Line
           data={{
-            labels: allMonths,
+            labels: allMonths.map(formatMonth),
             datasets: datasets,
           }}
           options={{
@@ -161,10 +189,10 @@ export default function PriceHistoryChart({ cars }: PriceHistoryChartProps) {
                 },
                 ticks: {
                   font: {
-                    size: 12,
+                    size: 11,
                   },
-                  maxRotation: 45,
-                  minRotation: 45,
+                  maxRotation: 0,
+                  minRotation: 0,
                 },
               },
               y: {
@@ -186,12 +214,11 @@ export default function PriceHistoryChart({ cars }: PriceHistoryChartProps) {
         />
       </div>
 
-      {/* Legenda adicional */}
       <div className="mt-6 pt-4 border-t border-slate-200">
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
           {cars.map((car, index) => {
             const prices = car.priceHistory
-              .map((p) => Number(p.price.replace(/[^0-9]/g, '')))
+              .map((p) => parseBRPrice(p.price))
               .filter((p) => !isNaN(p));
 
             if (prices.length === 0) return null;
@@ -205,10 +232,10 @@ export default function PriceHistoryChart({ cars }: PriceHistoryChartProps) {
             const color = COLORS[colorIndex];
 
             return (
-              <div key={car.model} className="bg-slate-50 rounded-lg p-4 border border-slate-200">
+              <div key={`${car.model}-${car.modelYear}`} className="bg-slate-50 rounded-lg p-4 border border-slate-200">
                 <div className="flex items-center gap-2 mb-3">
                   <div className="w-3 h-3 rounded-full" style={{ backgroundColor: color.border }} />
-                  <h4 className="font-medium text-sm text-slate-900 truncate">{car.model}</h4>
+                  <h4 className="font-medium text-sm text-slate-900 truncate">{car.model} {car.modelYear}</h4>
                 </div>
                 <div className="space-y-1 text-xs">
                   <div className="flex justify-between">

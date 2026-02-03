@@ -260,6 +260,15 @@ export class ComparisonAlgorithm {
     return { scores };
   }
 
+  private static formatCurrency = (value: number | string): string => {
+    const numValue = typeof value === 'string' ? parseFloat(value) : value;
+    
+    return new Intl.NumberFormat('pt-BR', {
+      style: 'currency',
+      currency: 'BRL',
+    }).format(numValue);
+  };
+
   private static buildFieldComparisons(
     carsData: Record<string, CarData>,
     fieldConfigs: Array<{
@@ -301,7 +310,7 @@ export class ComparisonAlgorithm {
             (max, [name, val]) => (values[max] === null || val > values[max] ? name : max),
             validValues[0][0],
           );
-          explanation = `Quanto menor, melhor. O ${best} é o mais econômico com ${values[best]}${config.unit || ''}.`;
+          explanation = `Quanto menor, melhor. O ${best} é o mais econômico com ${this.formatCurrency(values[best])}.`;
         } else {
           explanation = `Informação técnica. Veja a tabela para comparar.`;
         }

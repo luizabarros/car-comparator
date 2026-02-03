@@ -24,12 +24,10 @@ export default function CarSelector({ id, carNumber, onCarDataChange, onLoadingC
 
   const { toast } = useToast();
 
-  // Load brands
   useEffect(() => {
     loadBrands();
   }, []);
 
-  // Sync loading state
   useEffect(() => {
     onLoadingChange(loadingDetails);
   }, [loadingDetails, onLoadingChange]);

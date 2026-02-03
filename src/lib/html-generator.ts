@@ -106,17 +106,6 @@ export class HTMLGenerator {
   <script src="https://cdn.tailwindcss.com"></script>
   <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-  <style>
-    @media print {
-      .no-print { display: none; }
-    }
-    .hover-scale {
-      transition: transform 0.2s;
-    }
-    .hover-scale:hover {
-      transform: scale(1.02);
-    }
-  </style>
 </head>
 <body class="bg-gradient-to-br from-gray-50 to-gray-100 min-h-screen">
   
@@ -464,7 +453,7 @@ export class HTMLGenerator {
                   {{label}}
                 </td>
                 {{#each ../cars}}
-                <td class="px-6 py-4 text-center whitespace-nowrap {{getBestClass name ../best ../worst}}">
+                <td class="px-6 py-4 text-center {{getBestClass name ../best ../worst}}">
                   <div class="flex items-center justify-center">
                     {{#if (eq name ../best)}}
                     <i class="fas fa-trophy text-yellow-500 mr-2"></i>
@@ -520,6 +509,420 @@ export class HTMLGenerator {
       </div>
     </div>
 
+    <!-- TABELA: Conforto -->
+    <div class="bg-white rounded-2xl shadow-lg overflow-hidden mb-8">
+      <div class="bg-gradient-to-r from-cyan-600 to-cyan-700 px-6 py-4">
+        <h3 class="text-xl font-bold text-white flex items-center">
+          <i class="fas fa-couch mr-2"></i> Conforto e Conveniência
+        </h3>
+      </div>
+      <div class="overflow-x-auto">
+        <table class="min-w-full divide-y divide-gray-200">
+          <thead class="bg-gray-50">
+            <tr>
+              <th class="px-6 py-4 text-left text-sm font-bold text-gray-700 uppercase tracking-wider">Item</th>
+              {{#each cars}}
+              <th class="px-6 py-4 text-center text-sm font-bold text-gray-700 uppercase tracking-wider">{{name}}</th>
+              {{/each}}
+            </tr>
+          </thead>
+          <tbody class="bg-white divide-y divide-gray-200">
+            <tr class="hover:bg-gray-50 transition">
+              <td class="px-6 py-4 whitespace-nowrap font-semibold text-gray-900">Ar Condicionado</td>
+              {{#each cars}}
+              <td class="px-6 py-4 text-center whitespace-nowrap">
+                <span class="text-gray-900">{{#if data.conforto.ar_condicionado}}{{data.conforto.ar_condicionado}}{{else}}N/D{{/if}}</span>
+              </td>
+              {{/each}}
+            </tr>
+            <tr class="hover:bg-gray-50 transition">
+              <td class="px-6 py-4 whitespace-nowrap font-semibold text-gray-900">Direção Elétrica</td>
+              {{#each cars}}
+              <td class="px-6 py-4 text-center whitespace-nowrap">
+                {{#if data.conforto.direcao_eletrica}}
+                <i class="fas fa-check-circle text-green-600 text-xl"></i>
+                {{else}}
+                <i class="fas fa-times-circle text-red-400 text-xl"></i>
+                {{/if}}
+              </td>
+              {{/each}}
+            </tr>
+            <tr class="hover:bg-gray-50 transition">
+              <td class="px-6 py-4 whitespace-nowrap font-semibold text-gray-900">Vidros Elétricos</td>
+              {{#each cars}}
+              <td class="px-6 py-4 text-center whitespace-nowrap">
+                <span class="text-gray-900">{{#if data.conforto.vidros_eletricos}}{{data.conforto.vidros_eletricos}}{{else}}N/D{{/if}}</span>
+              </td>
+              {{/each}}
+            </tr>
+            <tr class="hover:bg-gray-50 transition">
+              <td class="px-6 py-4 whitespace-nowrap font-semibold text-gray-900">Travas Elétricas</td>
+              {{#each cars}}
+              <td class="px-6 py-4 text-center whitespace-nowrap">
+                {{#if data.conforto.travas_eletricas}}
+                <i class="fas fa-check-circle text-green-600 text-xl"></i>
+                {{else}}
+                <i class="fas fa-times-circle text-red-400 text-xl"></i>
+                {{/if}}
+              </td>
+              {{/each}}
+            </tr>
+            <tr class="hover:bg-gray-50 transition">
+              <td class="px-6 py-4 whitespace-nowrap font-semibold text-gray-900">Volante Multifuncional</td>
+              {{#each cars}}
+              <td class="px-6 py-4 text-center whitespace-nowrap">
+                {{#if data.conforto.volante_multifuncional}}
+                <i class="fas fa-check-circle text-green-600 text-xl"></i>
+                {{else}}
+                <i class="fas fa-times-circle text-red-400 text-xl"></i>
+                {{/if}}
+              </td>
+              {{/each}}
+            </tr>
+            <tr class="hover:bg-gray-50 transition">
+              <td class="px-6 py-4 whitespace-nowrap font-semibold text-gray-900">Computador de Bordo</td>
+              {{#each cars}}
+              <td class="px-6 py-4 text-center whitespace-nowrap">
+                {{#if data.conforto.computador_bordo}}
+                <i class="fas fa-check-circle text-green-600 text-xl"></i>
+                {{else}}
+                <i class="fas fa-times-circle text-red-400 text-xl"></i>
+                {{/if}}
+              </td>
+              {{/each}}
+            </tr>
+            <tr class="hover:bg-gray-50 transition">
+              <td class="px-6 py-4 whitespace-nowrap font-semibold text-gray-900">Controle de Cruzeiro</td>
+              {{#each cars}}
+              <td class="px-6 py-4 text-center whitespace-nowrap">
+                {{#if data.conforto.controle_cruzeiro}}
+                <i class="fas fa-check-circle text-green-600 text-xl"></i>
+                {{else}}
+                <i class="fas fa-times-circle text-red-400 text-xl"></i>
+                {{/if}}
+              </td>
+              {{/each}}
+            </tr>
+            <tr class="hover:bg-gray-50 transition">
+              <td class="px-6 py-4 whitespace-nowrap font-semibold text-gray-900">Sensor de Chuva</td>
+              {{#each cars}}
+              <td class="px-6 py-4 text-center whitespace-nowrap">
+                {{#if data.conforto.sensor_chuva}}
+                <i class="fas fa-check-circle text-green-600 text-xl"></i>
+                {{else}}
+                <i class="fas fa-times-circle text-red-400 text-xl"></i>
+                {{/if}}
+              </td>
+              {{/each}}
+            </tr>
+            <tr class="hover:bg-gray-50 transition">
+              <td class="px-6 py-4 whitespace-nowrap font-semibold text-gray-900">Bancos em Couro</td>
+              {{#each cars}}
+              <td class="px-6 py-4 text-center whitespace-nowrap">
+                {{#if data.conforto.banco_couro}}
+                <i class="fas fa-check-circle text-green-600 text-xl"></i>
+                {{else}}
+                <i class="fas fa-times-circle text-red-400 text-xl"></i>
+                {{/if}}
+              </td>
+              {{/each}}
+            </tr>
+          </tbody>
+        </table>
+      </div>
+      <div class="bg-cyan-50 px-6 py-3 border-t border-cyan-100">
+        <p class="text-sm text-gray-700"><i class="fas fa-star text-cyan-600 mr-2"></i><strong>Conforto:</strong> Itens de conveniência que tornam a experiência de dirigir mais agradável.</p>
+      </div>
+    </div>
+
+    <!-- TABELA: Segurança Ativa/Passiva -->
+    <div class="bg-white rounded-2xl shadow-lg overflow-hidden mb-8">
+      <div class="bg-gradient-to-r from-red-600 to-red-700 px-6 py-4">
+        <h3 class="text-xl font-bold text-white flex items-center">
+          <i class="fas fa-shield-alt mr-2"></i> Segurança Ativa e Passiva
+        </h3>
+      </div>
+      <div class="overflow-x-auto">
+        <table class="min-w-full divide-y divide-gray-200">
+          <thead class="bg-gray-50">
+            <tr>
+              <th class="px-6 py-4 text-left text-sm font-bold text-gray-700 uppercase tracking-wider">Sistema de Segurança</th>
+              {{#each cars}}
+              <th class="px-6 py-4 text-center text-sm font-bold text-gray-700 uppercase tracking-wider">{{name}}</th>
+              {{/each}}
+            </tr>
+          </thead>
+          <tbody class="bg-white divide-y divide-gray-200">
+            <tr class="hover:bg-gray-50 transition">
+              <td class="px-6 py-4 whitespace-nowrap font-semibold text-gray-900">Airbag Motorista</td>
+              {{#each cars}}
+              <td class="px-6 py-4 text-center whitespace-nowrap">
+                {{#if data.seguranca.airbags_motorista}}
+                <i class="fas fa-check-circle text-green-600 text-xl"></i>
+                {{else}}
+                <i class="fas fa-times-circle text-red-400 text-xl"></i>
+                {{/if}}
+              </td>
+              {{/each}}
+            </tr>
+            <tr class="hover:bg-gray-50 transition">
+              <td class="px-6 py-4 whitespace-nowrap font-semibold text-gray-900">Airbag Passageiro</td>
+              {{#each cars}}
+              <td class="px-6 py-4 text-center whitespace-nowrap">
+                {{#if data.seguranca.airbags_passageiro}}
+                <i class="fas fa-check-circle text-green-600 text-xl"></i>
+                {{else}}
+                <i class="fas fa-times-circle text-red-400 text-xl"></i>
+                {{/if}}
+              </td>
+              {{/each}}
+            </tr>
+            <tr class="hover:bg-gray-50 transition">
+              <td class="px-6 py-4 whitespace-nowrap font-semibold text-gray-900">Airbags Laterais</td>
+              {{#each cars}}
+              <td class="px-6 py-4 text-center whitespace-nowrap">
+                {{#if data.seguranca.airbags_laterais}}
+                <i class="fas fa-check-circle text-green-600 text-xl"></i>
+                {{else}}
+                <i class="fas fa-times-circle text-red-400 text-xl"></i>
+                {{/if}}
+              </td>
+              {{/each}}
+            </tr>
+            <tr class="hover:bg-gray-50 transition">
+              <td class="px-6 py-4 whitespace-nowrap font-semibold text-gray-900">Airbags Cortina</td>
+              {{#each cars}}
+              <td class="px-6 py-4 text-center whitespace-nowrap">
+                {{#if data.seguranca.airbags_cortina}}
+                <i class="fas fa-check-circle text-green-600 text-xl"></i>
+                {{else}}
+                <i class="fas fa-times-circle text-red-400 text-xl"></i>
+                {{/if}}
+              </td>
+              {{/each}}
+            </tr>
+            <tr class="hover:bg-gray-50 transition">
+              <td class="px-6 py-4 whitespace-nowrap font-semibold text-gray-900">ABS</td>
+              {{#each cars}}
+              <td class="px-6 py-4 text-center whitespace-nowrap">
+                {{#if data.seguranca.abs}}
+                <i class="fas fa-check-circle text-green-600 text-xl"></i>
+                {{else}}
+                <i class="fas fa-times-circle text-red-400 text-xl"></i>
+                {{/if}}
+              </td>
+              {{/each}}
+            </tr>
+            <tr class="hover:bg-gray-50 transition">
+              <td class="px-6 py-4 whitespace-nowrap font-semibold text-gray-900">Controle de Tração</td>
+              {{#each cars}}
+              <td class="px-6 py-4 text-center whitespace-nowrap">
+                {{#if data.seguranca.controle_tracao}}
+                <i class="fas fa-check-circle text-green-600 text-xl"></i>
+                {{else}}
+                <i class="fas fa-times-circle text-red-400 text-xl"></i>
+                {{/if}}
+              </td>
+              {{/each}}
+            </tr>
+            <tr class="hover:bg-gray-50 transition">
+              <td class="px-6 py-4 whitespace-nowrap font-semibold text-gray-900">Controle de Estabilidade</td>
+              {{#each cars}}
+              <td class="px-6 py-4 text-center whitespace-nowrap">
+                {{#if data.seguranca.controle_estabilidade}}
+                <i class="fas fa-check-circle text-green-600 text-xl"></i>
+                {{else}}
+                <i class="fas fa-times-circle text-red-400 text-xl"></i>
+                {{/if}}
+              </td>
+              {{/each}}
+            </tr>
+            <tr class="hover:bg-gray-50 transition">
+              <td class="px-6 py-4 whitespace-nowrap font-semibold text-gray-900">Câmera de Ré</td>
+              {{#each cars}}
+              <td class="px-6 py-4 text-center whitespace-nowrap">
+                {{#if data.seguranca.camera_re}}
+                <i class="fas fa-check-circle text-green-600 text-xl"></i>
+                {{else}}
+                <i class="fas fa-times-circle text-red-400 text-xl"></i>
+                {{/if}}
+              </td>
+              {{/each}}
+            </tr>
+            <tr class="hover:bg-gray-50 transition">
+              <td class="px-6 py-4 whitespace-nowrap font-semibold text-gray-900">Sensores de Estacionamento</td>
+              {{#each cars}}
+              <td class="px-6 py-4 text-center whitespace-nowrap">
+                {{#if data.seguranca.sensores_estacionamento_traseiro}}
+                <i class="fas fa-check-circle text-green-600 text-xl"></i>
+                {{else}}
+                <i class="fas fa-times-circle text-red-400 text-xl"></i>
+                {{/if}}
+              </td>
+              {{/each}}
+            </tr>
+            <tr class="hover:bg-gray-50 transition">
+              <td class="px-6 py-4 whitespace-nowrap font-semibold text-gray-900">Alerta Ponto Cego</td>
+              {{#each cars}}
+              <td class="px-6 py-4 text-center whitespace-nowrap">
+                {{#if data.seguranca.aviso_ponto_cego}}
+                <i class="fas fa-check-circle text-green-600 text-xl"></i>
+                {{else}}
+                <i class="fas fa-times-circle text-red-400 text-xl"></i>
+                {{/if}}
+              </td>
+              {{/each}}
+            </tr>
+            <tr class="hover:bg-gray-50 transition">
+              <td class="px-6 py-4 whitespace-nowrap font-semibold text-gray-900">Frenagem Automática de Emergência</td>
+              {{#each cars}}
+              <td class="px-6 py-4 text-center whitespace-nowrap">
+                {{#if data.seguranca.frenagem_automatica_emergencia}}
+                <i class="fas fa-check-circle text-green-600 text-xl"></i>
+                {{else}}
+                <i class="fas fa-times-circle text-red-400 text-xl"></i>
+                {{/if}}
+              </td>
+              {{/each}}
+            </tr>
+          </tbody>
+        </table>
+      </div>
+      <div class="bg-red-50 px-6 py-3 border-t border-red-100">
+        <p class="text-sm text-gray-700"><i class="fas fa-exclamation-triangle text-red-600 mr-2"></i><strong>Segurança:</strong> Sistemas que previnem acidentes (ativa) ou protegem ocupantes em colisões (passiva).</p>
+      </div>
+    </div>
+
+    <!-- TABELA: Infotenimento -->
+    <div class="bg-white rounded-2xl shadow-lg overflow-hidden mb-8">
+      <div class="bg-gradient-to-r from-purple-600 to-purple-700 px-6 py-4">
+        <h3 class="text-xl font-bold text-white flex items-center">
+          <i class="fas fa-mobile-alt mr-2"></i> Infotenimento e Conectividade
+        </h3>
+      </div>
+      <div class="overflow-x-auto">
+        <table class="min-w-full divide-y divide-gray-200">
+          <thead class="bg-gray-50">
+            <tr>
+              <th class="px-6 py-4 text-left text-sm font-bold text-gray-700 uppercase tracking-wider">Recurso</th>
+              {{#each cars}}
+              <th class="px-6 py-4 text-center text-sm font-bold text-gray-700 uppercase tracking-wider">{{name}}</th>
+              {{/each}}
+            </tr>
+          </thead>
+          <tbody class="bg-white divide-y divide-gray-200">
+            <tr class="hover:bg-gray-50 transition">
+              <td class="px-6 py-4 whitespace-nowrap font-semibold text-gray-900">Central Multimídia</td>
+              {{#each cars}}
+              <td class="px-6 py-4 text-center whitespace-nowrap">
+                <span class="text-gray-900">{{#if data.infotenimento.central_multimidia}}{{data.infotenimento.central_multimidia}}{{else}}N/D{{/if}}</span>
+              </td>
+              {{/each}}
+            </tr>
+            <tr class="hover:bg-gray-50 transition">
+              <td class="px-6 py-4 whitespace-nowrap font-semibold text-gray-900">Tela Touch</td>
+              {{#each cars}}
+              <td class="px-6 py-4 text-center whitespace-nowrap">
+                {{#if data.infotenimento.tela_touch}}
+                <i class="fas fa-check-circle text-green-600 text-xl"></i>
+                {{else}}
+                <i class="fas fa-times-circle text-red-400 text-xl"></i>
+                {{/if}}
+              </td>
+              {{/each}}
+            </tr>
+            <tr class="hover:bg-gray-50 transition">
+              <td class="px-6 py-4 whitespace-nowrap font-semibold text-gray-900">Tamanho da Tela</td>
+              {{#each cars}}
+              <td class="px-6 py-4 text-center whitespace-nowrap">
+                <span class="text-gray-900">{{#if data.infotenimento.tamanho_tela}}{{data.infotenimento.tamanho_tela}}{{else}}N/D{{/if}}</span>
+              </td>
+              {{/each}}
+            </tr>
+            <tr class="hover:bg-gray-50 transition">
+              <td class="px-6 py-4 whitespace-nowrap font-semibold text-gray-900">Android Auto</td>
+              {{#each cars}}
+              <td class="px-6 py-4 text-center whitespace-nowrap">
+                {{#if data.infotenimento.android_auto}}
+                <i class="fas fa-check-circle text-green-600 text-xl"></i>
+                {{else}}
+                <i class="fas fa-times-circle text-red-400 text-xl"></i>
+                {{/if}}
+              </td>
+              {{/each}}
+            </tr>
+            <tr class="hover:bg-gray-50 transition">
+              <td class="px-6 py-4 whitespace-nowrap font-semibold text-gray-900">Apple CarPlay</td>
+              {{#each cars}}
+              <td class="px-6 py-4 text-center whitespace-nowrap">
+                {{#if data.infotenimento.apple_carplay}}
+                <i class="fas fa-check-circle text-green-600 text-xl"></i>
+                {{else}}
+                <i class="fas fa-times-circle text-red-400 text-xl"></i>
+                {{/if}}
+              </td>
+              {{/each}}
+            </tr>
+            <tr class="hover:bg-gray-50 transition">
+              <td class="px-6 py-4 whitespace-nowrap font-semibold text-gray-900">Bluetooth</td>
+              {{#each cars}}
+              <td class="px-6 py-4 text-center whitespace-nowrap">
+                {{#if data.infotenimento.bluetooth}}
+                <i class="fas fa-check-circle text-green-600 text-xl"></i>
+                {{else}}
+                <i class="fas fa-times-circle text-red-400 text-xl"></i>
+                {{/if}}
+              </td>
+              {{/each}}
+            </tr>
+            <tr class="hover:bg-gray-50 transition">
+              <td class="px-6 py-4 whitespace-nowrap font-semibold text-gray-900">USB</td>
+              {{#each cars}}
+              <td class="px-6 py-4 text-center whitespace-nowrap">
+                {{#if data.infotenimento.usb}}
+                <i class="fas fa-check-circle text-green-600 text-xl"></i>
+                {{else}}
+                <i class="fas fa-times-circle text-red-400 text-xl"></i>
+                {{/if}}
+              </td>
+              {{/each}}
+            </tr>
+            <tr class="hover:bg-gray-50 transition">
+              <td class="px-6 py-4 whitespace-nowrap font-semibold text-gray-900">Sistema de Som</td>
+              {{#each cars}}
+              <td class="px-6 py-4 text-center whitespace-nowrap">
+                <span class="text-gray-900">{{#if data.infotenimento.sistema_som}}{{data.infotenimento.sistema_som}}{{else}}N/D{{/if}}</span>
+              </td>
+              {{/each}}
+            </tr>
+            <tr class="hover:bg-gray-50 transition">
+              <td class="px-6 py-4 whitespace-nowrap font-semibold text-gray-900">Alto-falantes</td>
+              {{#each cars}}
+              <td class="px-6 py-4 text-center whitespace-nowrap">
+                <span class="text-gray-900">{{#if data.infotenimento.numero_alto_falantes}}{{data.infotenimento.numero_alto_falantes}}{{else}}N/D{{/if}}</span>
+              </td>
+              {{/each}}
+            </tr>
+            <tr class="hover:bg-gray-50 transition">
+              <td class="px-6 py-4 whitespace-nowrap font-semibold text-gray-900">Navegação GPS</td>
+              {{#each cars}}
+              <td class="px-6 py-4 text-center whitespace-nowrap">
+                {{#if data.infotenimento.navegacao_gps}}
+                <i class="fas fa-check-circle text-green-600 text-xl"></i>
+                {{else}}
+                <i class="fas fa-times-circle text-red-400 text-xl"></i>
+                {{/if}}
+              </td>
+              {{/each}}
+            </tr>
+          </tbody>
+        </table>
+      </div>
+      <div class="bg-purple-50 px-6 py-3 border-t border-purple-100">
+        <p class="text-sm text-gray-700"><i class="fas fa-wifi text-purple-600 mr-2"></i><strong>Conectividade:</strong> Sistemas de entretenimento e conectividade com smartphones.</p>
+      </div>
+    </div>
+
     <!-- RECLAMAÇÕES (RECLAME AQUI) -->
     {{#if (or cars.[0].data.reclamacoes cars.[1].data.reclamacoes)}}
     <div class="mb-12">
@@ -549,7 +952,7 @@ export class HTMLGenerator {
             <h5 class="font-bold text-gray-900 mb-3 text-sm uppercase tracking-wide">Principais Reclamações:</h5>
             <div class="space-y-3">
               {{#each data.reclamacoes}}
-              <div class="bg-gray-50 rounded-lg p-4 hover:bg-gray-100 transition border-l-4 border-orange-500">
+              <div class="bg-gray-50 rounded-lg p-4 transition border-l-4 border-orange-500">
                 <div class="flex items-start space-x-3">
                   <i class="fas fa-comment-dots text-orange-500 mt-1 text-lg"></i>
                   <div class="flex-1">
@@ -557,10 +960,13 @@ export class HTMLGenerator {
                     <p class="text-xs text-gray-600 mb-2">{{descricao}}</p>
                     <div class="flex items-center justify-between">
                       <span class="text-xs text-gray-500">
-                        <i class="far fa-calendar mr-1"></i>{{data}}
+                        {{#if data}}
+                          <i class="far fa-calendar mr-1"></i>{{data}}
+                        {{/if}}
                       </span>
+
                       <a href="{{link}}" target="_blank" rel="noopener noreferrer" 
-                         class="text-blue-600 text-xs hover:underline font-semibold flex items-center">
+                        class="text-blue-600 text-xs hover:underline font-semibold flex items-center">
                         Ver detalhes <i class="fas fa-external-link-alt ml-1"></i>
                       </a>
                     </div>

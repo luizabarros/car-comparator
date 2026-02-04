@@ -30,7 +30,7 @@ export default function CarSelector({ id, carNumber, onCarDataChange, onLoadingC
 
   useEffect(() => {
     onLoadingChange(loadingDetails);
-  }, [loadingDetails, onLoadingChange]);
+  }, [loadingDetails]);
 
   const loadBrands = async () => {
     setLoadingBrands(true);

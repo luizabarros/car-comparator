@@ -117,7 +117,7 @@ export class SearchAPI {
     const searchPromises = [
       this.searchSerpAPI({
         engine: 'google',
-        q: `${searchTerm} ficha técnica site:olhonocarro.com.br OR site:shopcar.com.br OR site:fichacompleta.com.br`,
+        q: `${searchTerm} ficha técnica`,
       }),
 
       this.searchSerpAPI({

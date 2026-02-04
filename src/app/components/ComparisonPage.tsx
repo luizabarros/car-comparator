@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useCallback, useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Car, Plus } from 'lucide-react';
 import { useToast } from '../components/UseToast';
@@ -22,9 +22,9 @@ export default function ComparisonPage() {
   const [priceHistoryCars, setPriceHistoryCars] = useState<any[]>([]);
   const [isComparing, setIsComparing] = useState(false);
 
-  const handleUpdateSlot = (id: number, field: string, value: any) => {
+  const handleUpdateSlot = useCallback((id: number, field: string, value: any) => {
     setSlots((prev) => prev.map((slot) => (slot.id === id ? { ...slot, [field]: value } : slot)));
-  };
+  }, []);
 
   const handleCompare = async () => {
     setComparisonHTML(null);
@@ -44,8 +44,6 @@ export default function ComparisonPage() {
 
     try {
       const selectedCars = filledSlots.map((s) => `${s.data.Modelo}, ${s.data.AnoModelo}`);
-
-      console.log('🚗 Enviando para API:', selectedCars);
 
       const response = await fetch('/api/search-analyze', {
         method: 'POST',

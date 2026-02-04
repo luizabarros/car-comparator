@@ -121,7 +121,7 @@ export class HTMLGenerator {
     </header>
 
     <!-- CARDS DOS CARROS -->
-    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-{{cars.length}} gap-6 mb-12">
+    <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mb-12">
       {{#each cars}}
       <div class="bg-white rounded-2xl shadow-xl overflow-hidden hover-scale">
         <!-- Imagem do Carro -->
@@ -177,8 +177,11 @@ export class HTMLGenerator {
             </div>
             <div class="w-full bg-gray-200 rounded-full h-3 overflow-hidden">
               <div class="bg-gradient-to-r from-blue-500 to-purple-600 h-3 rounded-full transition-all duration-500" 
-                   style="width: {{score.percentage}}%"></div>
+                  style="width: {{score.percentage}}%"></div>
             </div>
+            <p class="text-xs text-gray-500 mt-2">
+              Pontuação geral baseada em custo, benefícios e manutenção. Quanto maior, melhor o equilíbrio geral.
+            </p>
           </div>
         </div>
       </div>
@@ -814,7 +817,7 @@ export class HTMLGenerator {
             <tr class="hover:bg-gray-50 transition">
               <td class="px-6 py-4 whitespace-nowrap font-semibold text-gray-900">Central Multimídia</td>
               {{#each cars}}
-              <td class="px-6 py-4 text-center whitespace-nowrap">
+              <td class="px-6 py-4 text-center">
                 <span class="text-gray-900">{{#if data.infotenimento.central_multimidia}}{{data.infotenimento.central_multimidia}}{{else}}N/D{{/if}}</span>
               </td>
               {{/each}}
@@ -834,7 +837,7 @@ export class HTMLGenerator {
             <tr class="hover:bg-gray-50 transition">
               <td class="px-6 py-4 whitespace-nowrap font-semibold text-gray-900">Tamanho da Tela</td>
               {{#each cars}}
-              <td class="px-6 py-4 text-center whitespace-nowrap">
+              <td class="px-6 py-4 text-center">
                 <span class="text-gray-900">{{#if data.infotenimento.tamanho_tela}}{{data.infotenimento.tamanho_tela}}{{else}}N/D{{/if}}</span>
               </td>
               {{/each}}
@@ -890,7 +893,7 @@ export class HTMLGenerator {
             <tr class="hover:bg-gray-50 transition">
               <td class="px-6 py-4 whitespace-nowrap font-semibold text-gray-900">Sistema de Som</td>
               {{#each cars}}
-              <td class="px-6 py-4 text-center whitespace-nowrap">
+              <td class="px-6 py-4 text-center">
                 <span class="text-gray-900">{{#if data.infotenimento.sistema_som}}{{data.infotenimento.sistema_som}}{{else}}N/D{{/if}}</span>
               </td>
               {{/each}}
@@ -898,7 +901,7 @@ export class HTMLGenerator {
             <tr class="hover:bg-gray-50 transition">
               <td class="px-6 py-4 whitespace-nowrap font-semibold text-gray-900">Alto-falantes</td>
               {{#each cars}}
-              <td class="px-6 py-4 text-center whitespace-nowrap">
+              <td class="px-6 py-4 text-center">
                 <span class="text-gray-900">{{#if data.infotenimento.numero_alto_falantes}}{{data.infotenimento.numero_alto_falantes}}{{else}}N/D{{/if}}</span>
               </td>
               {{/each}}
@@ -930,7 +933,7 @@ export class HTMLGenerator {
         <i class="fas fa-exclamation-triangle text-yellow-500 mr-3"></i> Reclamações (Reclame Aqui)
       </h2>
 
-      <div class="grid grid-cols-1 lg:grid-cols-{{cars.length}} gap-6">
+      <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
         {{#each cars}}
         {{#if data.reclamacoes}}
         <div class="bg-white rounded-2xl shadow-lg overflow-hidden">

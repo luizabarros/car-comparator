@@ -10,6 +10,7 @@ import { Analyzer } from '../../../lib/analyzer';
 import { AnalyzedCar, CarData, CarItem, ProcessedURLs, SearchFilterResult, SearchResult } from '@/types/car'
 import { SearchAPI } from '@/lib/search'
 import { HTMLGenerator } from '@/lib/html-generator'
+import { RateLimiter } from '@/lib/rate-limiter'
 
 const ANALYSIS_TIMEOUT_PER_CAR = 60000;
 const SEARCH_TIMEOUT_PER_CAR = 30000;
@@ -23,6 +24,15 @@ function withTimeout<T>(promise: Promise<T>, timeoutMs: number, errorMessage: st
       setTimeout(() => reject(new Error(errorMessage)), timeoutMs)
     ),
   ]);
+}
+
+function getClientKey(req: NextRequest) {
+  const ip =
+    req.headers.get('x-forwarded-for')?.split(',')[0] ??
+    req.headers.get('x-real-ip') ??
+    'unknown';
+
+  return `car-analysis:${ip}`;
 }
 
 class ParseFilter {
@@ -211,6 +221,10 @@ export async function GET() {
 
 export async function POST(request: NextRequest) {
   try {
+    const key = getClientKey(request);
+
+    await RateLimiter.consume(key);
+
     const carItems: string[] = await request.json();
 
     if (!Array.isArray(carItems) || carItems.length === 0) {
@@ -246,6 +260,16 @@ export async function POST(request: NextRequest) {
     });
 
   } catch (error) {
+    if (error instanceof Error && error.message === 'Rate limit exceeded') {
+      return NextResponse.json(
+        {
+          error: 'Too many requests',
+          message: 'Rate limit exceeded. Try again later.'
+        },
+        { status: 429 }
+      );
+    }
+    
     console.error('❌ Search-Analyze error:', error);
     return NextResponse.json(
       { 

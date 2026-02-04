@@ -31,8 +31,9 @@ connectRedis();
 
 const rateLimiter = new RateLimiterRedis({
   storeClient: redisClient,
-  points: 1,
-  duration: 1,
+  points: 10,     // 10 requisições
+  duration: 60,    // Por minuto (10 req/min)
+  blockDuration: 60,
 });
 
 export class RateLimiter {

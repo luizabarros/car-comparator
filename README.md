@@ -1028,3 +1028,29 @@ Carro 1: Parse → Search → URLProcess → LLMExtract (90s) ┐
 Carro 2: Parse → Search → URLProcess → LLMExtract (90s) ┘
 
 TOTAL: 90s para 2 carros (50% MAIS RÁPIDO!)
+
+“Para maximizar a precisão dos dados técnicos, optou-se por fontes fixas e reconhecidas. A indisponibilidade dessas fontes é uma limitação conhecida, aceitável no contexto acadêmico, e mitigável em produção por mecanismos de fallback.”
+
+“A imprecisão observada não decorre do modelo de linguagem, mas da natureza genérica da camada de recuperação. O LLM atua sobre URLs retornadas pela SERP API, e a qualidade da saída está diretamente ligada à qualidade das fontes recuperadas.”
+
+“Porque a busca passou a ser genérica. A solução adotada prioriza disponibilidade e resiliência, e a precisão pode ser recuperada com mecanismos de busca guiada e validação cruzada, sem reintroduzir dependência de uma única fonte.”
+
+“Para o escopo deste trabalho, a resiliência e a redução de manutenção justificam a escolha por LLM, mesmo com maior latência.”
+
+“O modelo de linguagem não elimina scraping, mas reduz a dependência de regras estruturais rígidas, funcionando como uma camada semântica mais resiliente a mudanças.”
+
+“Em cenários com múltiplas fontes heterogêneas e estrutura instável, o uso de modelos de linguagem mostrou-se mais robusto que scraping tradicional, que depende fortemente de seletores frágeis, manutenção contínua e infraestrutura de proxy.”
+
+“Após aplicação de chunking, paralelismo e cache, o desempenho do sistema passa a ser limitado pelo tempo de inferência do modelo, caracterizando um gargalo computacional externo à arquitetura.”
+
+“A unificação reduziria chamadas, mas aumentaria alucinação, dificultaria validação e tornaria o sistema menos confiável. A escolha por chunks prioriza corretude e auditabilidade.”
+
+“A arquitetura foi dividida em múltiplos chunks especializados, executados de forma paralela e com cache de resultados. Mesmo com essas otimizações, a latência permanece dominada pelo tempo de inferência do modelo de linguagem.”
+
+“Porque após paralelizar os trechos independentes e aplicar cache, o tempo de inferência do modelo domina o tempo total. Otimizações adicionais teriam ganho marginal.”
+
+“O sistema já emprega cache de resultados e execução paralela de tarefas independentes. Após essas otimizações, a principal fonte de latência remanescente é o tempo de inferência do modelo de linguagem, que passa a ser o fator limitante do desempenho.”
+
+“A latência observada está associada ao tempo de inferência do modelo. Técnicas como batch e streaming não reduzem esse tempo no cenário de comparação pontual, apenas alteram a forma de entrega do resultado.”
+
+“Considera-se resposta precisa aquela que apresenta dados factualmente corretos, específicos à versão analisada, internamente consistentes e rastreáveis às fontes utilizadas.”

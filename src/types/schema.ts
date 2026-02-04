@@ -1,4 +1,4 @@
-export const carDataSchema = {
+export const schemaTecnico = {
   type: 'object',
   additionalProperties: false,
   properties: {
@@ -17,7 +17,6 @@ export const carDataSchema = {
       },
       required: ['fabricante', 'modelo', 'ano', 'versao', 'preco', 'garantia', 'ipva', 'seguro'],
     },
-
     motor: {
       type: 'object',
       additionalProperties: false,
@@ -38,7 +37,6 @@ export const carDataSchema = {
         'torque_maximo',
       ],
     },
-
     transmissao: {
       type: 'object',
       additionalProperties: false,
@@ -50,7 +48,6 @@ export const carDataSchema = {
       },
       required: ['cambio', 'marchas', 'tracao', 'acoplamento'],
     },
-
     suspensao: {
       type: 'object',
       additionalProperties: false,
@@ -61,7 +58,6 @@ export const carDataSchema = {
       },
       required: ['dianteira', 'traseira', 'elemento_elastico'],
     },
-
     freios: {
       type: 'object',
       additionalProperties: false,
@@ -71,7 +67,6 @@ export const carDataSchema = {
       },
       required: ['dianteiros', 'traseiros'],
     },
-
     direcao: {
       type: 'object',
       additionalProperties: false,
@@ -80,7 +75,6 @@ export const carDataSchema = {
       },
       required: ['tipo'],
     },
-
     pneus: {
       type: 'object',
       additionalProperties: false,
@@ -91,7 +85,6 @@ export const carDataSchema = {
       },
       required: ['dianteiros', 'traseiros', 'estepe'],
     },
-
     dimensoes: {
       type: 'object',
       additionalProperties: false,
@@ -105,7 +98,6 @@ export const carDataSchema = {
       },
       required: ['comprimento', 'largura', 'altura', 'dist_entre_eixos', 'porta_malas', 'peso'],
     },
-
     desempenho: {
       type: 'object',
       additionalProperties: false,
@@ -116,7 +108,6 @@ export const carDataSchema = {
       },
       required: ['velocidade_max', 'aceleracao_0_100', 'frenagem_100_0'],
     },
-
     consumo: {
       type: 'object',
       additionalProperties: false,
@@ -127,7 +118,6 @@ export const carDataSchema = {
       },
       required: ['urbano', 'rodoviario', 'eletrico'],
     },
-
     autonomia: {
       type: 'object',
       additionalProperties: false,
@@ -138,7 +128,26 @@ export const carDataSchema = {
       },
       required: ['urbana', 'rodoviaria', 'eletrica'],
     },
+  },
+  required: [
+    'informacoes_gerais',
+    'motor',
+    'transmissao',
+    'suspensao',
+    'freios',
+    'direcao',
+    'pneus',
+    'dimensoes',
+    'desempenho',
+    'consumo',
+    'autonomia',
+  ],
+};
 
+export const schemaFeatures = {
+  type: 'object',
+  additionalProperties: false,
+  properties: {
     conforto: {
       type: 'object',
       additionalProperties: false,
@@ -253,7 +262,14 @@ export const carDataSchema = {
         'navegacao_gps',
       ],
     },
+  },
+  required: ['conforto', 'seguranca', 'infotenimento'],
+};
 
+export const schemaAnalise = {
+  type: 'object',
+  additionalProperties: false,
+  properties: {
     avaliacao: {
       type: 'object',
       additionalProperties: false,
@@ -272,7 +288,6 @@ export const carDataSchema = {
         'assistencia',
       ],
     },
-
     historico_depreciacao: {
       type: 'array',
       items: {
@@ -285,7 +300,6 @@ export const carDataSchema = {
         required: ['ano', 'preco'],
       },
     },
-
     analise_ia: {
       type: 'object',
       additionalProperties: false,
@@ -307,7 +321,6 @@ export const carDataSchema = {
         'satisfacao_proprietarios',
       ],
     },
-
     imagens: {
       type: 'array',
       items: {
@@ -319,7 +332,6 @@ export const carDataSchema = {
         required: ['imageUrl'],
       },
     },
-
     reclamacoes: {
       type: 'array',
       items: {
@@ -334,11 +346,9 @@ export const carDataSchema = {
         required: ['titulo', 'data', 'descricao', 'link'],
       },
     },
-
     reclamacoes_resumo: {
       type: ['string', 'null'],
     },
-
     concessionarias_proximas: {
       type: 'array',
       items: {
@@ -355,17 +365,6 @@ export const carDataSchema = {
     },
   },
   required: [
-    'informacoes_gerais',
-    'motor',
-    'transmissao',
-    'suspensao',
-    'freios',
-    'direcao',
-    'pneus',
-    'dimensoes',
-    'desempenho',
-    'consumo',
-    'autonomia',
     'avaliacao',
     'historico_depreciacao',
     'analise_ia',
@@ -373,15 +372,5 @@ export const carDataSchema = {
     'reclamacoes',
     'reclamacoes_resumo',
     'concessionarias_proximas',
-    'conforto',
-    'seguranca',
-    'infotenimento',
   ],
 };
-
-export const FIELDS_REQUIRING_WEB_SEARCH = [
-  'custo_total_propriedade',
-  'ipva',
-  'seguro',
-  'avaliacao',
-];

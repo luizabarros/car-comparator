@@ -117,7 +117,7 @@ export class SearchAPI {
     const searchPromises = [
       this.searchSerpAPI({
         engine: 'google',
-        q: `${searchTerm} ficha técnica -site:carrosnaweb.com.br -site:byd.com`,
+        q: `${searchTerm} ficha técnica -site:carrosnaweb.com.br -site:byd.com -filetype:pdf`,
       }),
 
       this.searchSerpAPI({

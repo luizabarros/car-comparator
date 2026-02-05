@@ -35,9 +35,16 @@ export class ComparisonAlgorithm {
       25,
     );
 
+    // CORREÇÃO: Incluir NCAP e assistencia no cálculo de segurança
     const safetyComparison = this.compareCategory(
       carsData,
-      ['avaliacao.protecao_adultos', 'avaliacao.protecao_criancas', 'avaliacao.protecao_pedestres'],
+      [
+        'avaliacao.protecao_adultos',
+        'avaliacao.protecao_criancas',
+        'avaliacao.protecao_pedestres',
+        'avaliacao.assistencia',
+        'avaliacao.ncap',
+      ],
       'higher_better',
       25,
     );
@@ -129,6 +136,12 @@ export class ComparisonAlgorithm {
       ]),
       safety: this.buildFieldComparisons(carsData, [
         {
+          field: 'avaliacao.ncap',
+          label: 'NCAP Global',
+          unit: '★',
+          comparison: 'higher_better',
+        },
+        {
           field: 'avaliacao.protecao_adultos',
           label: 'Proteção Adultos',
           unit: '★',
@@ -167,12 +180,174 @@ export class ComparisonAlgorithm {
         bestPrice: this.findBest(carsData, 'informacoes_gerais.preco', 'lower'),
         bestPerformance: this.findBest(carsData, 'motor.potencia_maxima', 'higher'),
         bestEfficiency: this.findBest(carsData, 'consumo.rodoviario', 'higher'),
-        bestSafety: this.findBest(carsData, 'avaliacao.protecao_adultos', 'higher'),
+        bestSafety: this.findBestSafety(carsData) || 'N/A',
         bestOverall: winner,
       },
       highlights,
       humanAnalysis: this.generateHumanAnalysis(carsData, highlights, winner),
     };
+  }
+
+  private static findBestSafety(carsData: Record<string, CarData>): string | null {
+    const carNames = Object.keys(carsData);
+
+    const safetyScores = carNames.map((name) => {
+      const car = carsData[name];
+      let score = 0;
+      let count = 0;
+
+      const ncapFields = [
+        car.avaliacao?.ncap,
+        car.avaliacao?.protecao_adultos,
+        car.avaliacao?.protecao_criancas,
+        car.avaliacao?.protecao_pedestres,
+        car.avaliacao?.assistencia,
+      ];
+
+      ncapFields.forEach((value) => {
+        if (value !== null && value !== undefined && !isNaN(Number(value))) {
+          score += Number(value) * 2; // Peso dobrado para ratings NCAP
+          count += 2;
+        }
+      });
+
+      const passiveFeatures = [
+        car.seguranca?.airbags_motorista,
+        car.seguranca?.airbags_passageiro,
+        car.seguranca?.airbags_laterais,
+        car.seguranca?.airbags_cortina,
+      ];
+
+      passiveFeatures.forEach((value) => {
+        if (value === true) {
+          score += 1;
+          count += 1;
+        }
+      });
+
+      const activeFeatures = [
+        car.seguranca?.abs,
+        car.seguranca?.controle_tracao,
+        car.seguranca?.controle_estabilidade,
+        car.seguranca?.frenagem_automatica_emergencia,
+        car.seguranca?.alerta_colisao_frontal,
+        car.seguranca?.aviso_ponto_cego,
+        car.seguranca?.alerta_saida_faixa,
+      ];
+
+      activeFeatures.forEach((value) => {
+        if (value === true) {
+          score += 1;
+          count += 1;
+        }
+      });
+
+      return {
+        name,
+        score: count > 0 ? score / count : 0,
+        rawScore: score,
+        count,
+      };
+    });
+
+    const validScores = safetyScores.filter((s) => s.count > 0);
+
+    if (validScores.length === 0) {
+      return null;
+    }
+
+    const best = validScores.reduce((max, current) =>
+      current.score > max.score ? current : max
+    );
+
+    return best.name;
+  }
+
+  private static generateSafetyAnalysis(
+    carsData: Record<string, CarData>,
+    highlights: Record<string, FieldComparison[]>,
+  ): string {
+    const carNames = Object.keys(carsData);
+    
+    const safetyDetails = carNames.map((name) => {
+      const car = carsData[name];
+      
+      const ratings = {
+        ncap: car.avaliacao?.ncap,
+        adultos: car.avaliacao?.protecao_adultos,
+        criancas: car.avaliacao?.protecao_criancas,
+        pedestres: car.avaliacao?.protecao_pedestres,
+        assistencia: car.avaliacao?.assistencia,
+      };
+
+      const airbags = [
+        car.seguranca?.airbags_motorista,
+        car.seguranca?.airbags_passageiro,
+        car.seguranca?.airbags_laterais,
+        car.seguranca?.airbags_cortina,
+      ].filter((v) => v === true).length;
+
+      const activeFeatures = [
+        car.seguranca?.abs,
+        car.seguranca?.controle_tracao,
+        car.seguranca?.controle_estabilidade,
+        car.seguranca?.frenagem_automatica_emergencia,
+        car.seguranca?.alerta_colisao_frontal,
+        car.seguranca?.aviso_ponto_cego,
+        car.seguranca?.alerta_saida_faixa,
+      ].filter((v) => v === true).length;
+
+      let totalScore = 0;
+      let ratingCount = 0;
+
+      Object.values(ratings).forEach((rating) => {
+        if (rating !== null && rating !== undefined && !isNaN(Number(rating))) {
+          totalScore += Number(rating);
+          ratingCount++;
+        }
+      });
+
+      const avgRating = ratingCount > 0 ? totalScore / ratingCount : null;
+
+      return {
+        name,
+        ratings,
+        avgRating,
+        airbags,
+        activeFeatures,
+        hasNCAP: ratingCount > 0,
+      };
+    });
+
+    const withRatings = safetyDetails.filter((d) => d.hasNCAP);
+    
+    if (withRatings.length === 0) {
+      const bestByFeatures = safetyDetails.reduce((max, current) => {
+        const maxTotal = max.airbags + max.activeFeatures;
+        const currentTotal = current.airbags + current.activeFeatures;
+        return currentTotal > maxTotal ? current : max;
+      });
+
+      return `Em segurança, o ${bestByFeatures.name} se destaca com ${bestByFeatures.airbags} airbag(s) e ${bestByFeatures.activeFeatures} sistema(s) de assistência ativa. Dados de crash test NCAP não estão disponíveis para comparação detalhada.`;
+    }
+
+    const maxRating = Math.max(...withRatings.map((d) => d.avgRating!));
+    const bestCars = withRatings.filter((d) => Math.abs(d.avgRating! - maxRating) < 0.1);
+
+    if (bestCars.length === 1) {
+      const best = bestCars[0];
+      const ratingText =
+        best.ratings.ncap !== null
+          ? `${best.ratings.ncap} estrelas no NCAP`
+          : `média de ${best.avgRating!.toFixed(1)} estrelas nas avaliações`;
+
+      return `Em segurança, o ${best.name} lidera com ${ratingText}. Conta com ${best.airbags} airbag(s) e ${best.activeFeatures} sistema(s) de assistência ativa. Para famílias, este é um fator crucial na decisão.`;
+    } else {
+      const names = bestCars.map((c) => c.name).join(' e ');
+      const best = bestCars[0];
+
+      return `Em segurança, há empate técnico entre ${names}, ambos com avaliações NCAP de aproximadamente ${maxRating.toFixed(1)} estrelas. Os dois oferecem proteção equivalente para ocupantes e pedestres. Compare os sistemas de assistência específicos de cada um para decidir.`;
+    }
   }
 
   private static generateHumanAnalysis(
@@ -195,9 +370,6 @@ export class ComparisonAlgorithm {
     const consumptionField = highlights.performance.find((h) => h.field === 'consumo.rodoviario');
     const bestConsumptionCar = consumptionField?.best || carNames[0];
 
-    const safetyField = highlights.safety.find((h) => h.field === 'avaliacao.protecao_adultos');
-    const bestSafetyCar = safetyField?.best || carNames[0];
-
     return {
       overall: `Analisamos ${carNames.length} veículos considerando preço, desempenho, eficiência e segurança. O ${winner} se destacou como a melhor opção geral no custo-benefício.`,
 
@@ -205,9 +377,9 @@ export class ComparisonAlgorithm {
 
       performanceAnalysis: `O ${bestPowerCar} lidera em potência${powerField ? ` com ${powerField.values[bestPowerCar]} cavalos` : ''}. Para quem busca um carro mais esportivo ou precisa de força para ultrapassagens, esta é a melhor escolha.`,
 
-      efficiencyAnalysis: `Pensando em economia de combustível, o ${bestConsumptionCar} é o mais eficiente${consumptionField ? `, fazendo ${consumptionField.values[bestConsumptionCar]} km/l na estrada` : ''}. No longo prazo, isso representa economia significativa.`,
+      efficiencyAnalysis: consumptionField.values[bestConsumptionCar] ? `Pensando em economia de combustível, o ${bestConsumptionCar} é o mais eficiente${consumptionField ? `, fazendo ${consumptionField.values[bestConsumptionCar]} km/l na estrada` : ''}. No longo prazo, isso representa economia significativa.` : `Pensando em economia de combustível, o ${bestConsumptionCar} é a mais eficiente.`,
 
-      safetyAnalysis: `Em segurança, o ${bestSafetyCar} tem as melhores avaliações${safetyField && safetyField.values[bestSafetyCar] ? ` com ${safetyField.values[bestSafetyCar]} estrelas` : ''}. Para famílias, este é um fator crucial na decisão.`,
+      safetyAnalysis: this.generateSafetyAnalysis(carsData, highlights),
 
       finalVerdict:
         winner === bestPriceCar && winner === bestPowerCar

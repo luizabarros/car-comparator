@@ -88,7 +88,7 @@ export class SearchAPI {
         default:
           const organicResults = data.organic_results || [];
           allResults.push(
-            ...organicResults.slice(0, 5).map((item: any) => ({
+            ...organicResults.map((item: any) => ({
               title: item.title || '',
               link: item.link || '',
               snippet: item.snippet || '',
@@ -114,10 +114,30 @@ export class SearchAPI {
     const cached = await redisClient.get(cacheKey);
     if (cached) return JSON.parse(cached);
 
+    const prioritySitesQuery = [
+      'site:fichacompleta.com.br',
+      'site:instacarro.com',
+      'site:eletricos.app',
+      'site:magodoscarros.com',
+      'site:shopcar.com.br',
+      'site:autopapo.com.br',
+      'site:canalve.com.br',
+      'site:mundodoautomovelparapcd.com.br',
+      'site:mercadolivre.com.br'
+    ].join(' OR ');
+
+    const excludeSites = [
+      '-site:carrosnaweb.com.br',
+      '-site:byd.com',
+      '-site:youtube.com',
+      '-site:webmotors.com.br',
+      '-filetype:pdf'
+    ].join(' ');
+
     const searchPromises = [
       this.searchSerpAPI({
         engine: 'google',
-        q: `${searchTerm} ficha técnica -site:carrosnaweb.com.br -site:byd.com -filetype:pdf`,
+        q: `${searchTerm} ficha técnica (${prioritySitesQuery}) ${excludeSites}`,
       }),
 
       this.searchSerpAPI({

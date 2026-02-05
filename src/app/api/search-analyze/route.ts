@@ -84,14 +84,54 @@ class URLProcessingFilter {
       searchResults.map(async (result) => {
         const organicUrls = result.searchResults
           .filter(r => r.type === 'organic' && r.link)
+          .sort((a, b) => {
+            const urlA = a.link.toLowerCase();
+            const urlB = b.link.toLowerCase();
+            
+            const priority = [
+              'fichacompleta',
+              'instacarro',
+              'eletricos.app',
+              'magodoscarros',
+              'shopcar',
+              'autopapo',
+              'canalve',
+              'mundodoautomovelparapcd',
+              'mercadolivre'
+            ];
+            
+            const getPriority = (url: string) => {
+              for (let i = 0; i < priority.length; i++) {
+                if (url.includes(priority[i])) return i;
+              }
+              return 999; // Sites não listados vão pro final
+            };
+            
+            return getPriority(urlA) - getPriority(urlB);
+          })
+          .filter(r => {
+            const url = r.link.toLowerCase();
+            return (
+              url.includes('shopcar') ||
+              url.includes('olhonocarro') ||
+              url.includes('fichacompleta') ||
+              url.includes('autopapo') ||
+              url.includes('mundodoautomovelparapcd') ||
+              url.includes('canalve') ||
+              url.includes('mercadolivre') ||
+              url.includes('eletricos.app') ||
+              url.includes('magodoscarros') ||
+              url.includes('instacarro')
+            );
+          })
           .map(r => r.link)
-          .slice(0, 10);
+          .slice(0, 2);
 
         const reclameAquiResults = result.searchResults.filter(r => 
           r.type === 'organic' && 
           r.link && 
           r.link.includes('reclameaqui.com.br')
-        );
+        ).slice(0, 5);
 
         const imageResults = result.searchResults.filter(r => r.type === 'image');
 

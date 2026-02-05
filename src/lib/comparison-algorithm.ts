@@ -257,7 +257,7 @@ export class ComparisonAlgorithm {
     }
 
     const best = validScores.reduce((max, current) =>
-      current.score > max.score ? current : max
+      current.rawScore > max.rawScore ? current : max
     );
 
     return best.name;

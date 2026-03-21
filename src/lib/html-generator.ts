@@ -250,6 +250,39 @@ export class HTMLGenerator {
         <i class="fas fa-clipboard-list text-blue-600 mr-3"></i> Fichas Técnicas Completas
       </h2>
 
+      {{#if (or cars.[0].data.metadata.sources.length cars.[1].data.metadata.sources.length)}}
+      <!-- FONTES DAS FICHAS TÉCNICAS -->
+      <div class="bg-white rounded-2xl shadow-lg p-6 mb-8 border border-blue-100">
+        <div class="flex items-center mb-4">
+          <i class="fas fa-link text-blue-600 mr-2"></i>
+          <h3 class="text-lg font-bold text-gray-900">Fontes das fichas técnicas</h3>
+        </div>
+        <p class="text-xs text-gray-500 mb-4">
+          Links das páginas utilizadas para compilar as especificações.
+        </p>
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+          {{#each cars}}
+          <div class="bg-blue-50 rounded-xl p-4 border border-blue-100">
+            <div class="text-sm font-semibold text-gray-900 mb-2">{{name}}</div>
+            {{#if data.metadata.sources.length}}
+            <ul class="list-disc pl-5 space-y-1 text-xs text-blue-700 break-words">
+              {{#each data.metadata.sources}}
+              <li>
+                <a href="{{this}}" target="_blank" rel="noopener noreferrer" class="hover:underline">
+                  {{this}}
+                </a>
+              </li>
+              {{/each}}
+            </ul>
+            {{else}}
+            <p class="text-xs text-gray-500">Fonte não informada.</p>
+            {{/if}}
+          </div>
+          {{/each}}
+        </div>
+      </div>
+      {{/if}}
+
       <!-- TABELA: Informações Gerais -->
       <div class="bg-white rounded-2xl shadow-lg overflow-hidden mb-8">
         <div class="bg-gradient-to-r from-blue-600 to-blue-700 px-6 py-4">

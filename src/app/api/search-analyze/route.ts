@@ -91,7 +91,6 @@ class URLProcessingFilter {
             const priority = [
               'fichacompleta',
               'instacarro',
-              'eletricos.app',
               'magodoscarros',
               'shopcar',
               'autopapo',
@@ -119,7 +118,6 @@ class URLProcessingFilter {
               url.includes('mundodoautomovelparapcd') ||
               url.includes('canalve') ||
               url.includes('mercadolivre') ||
-              url.includes('eletricos.app') ||
               url.includes('magodoscarros') ||
               url.includes('instacarro')
             );

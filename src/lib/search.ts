@@ -117,7 +117,6 @@ export class SearchAPI {
     const prioritySitesQuery = [
       'site:fichacompleta.com.br',
       'site:instacarro.com',
-      'site:eletricos.app',
       'site:magodoscarros.com',
       'site:shopcar.com.br',
       'site:autopapo.com.br',

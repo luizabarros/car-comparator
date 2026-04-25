@@ -9,7 +9,7 @@ interface SearchResult {
   imageUrl?: string;
   source?: string;
   date?: string;
-  type?: string; // 'image', 'local', 'organic', 'review'
+  type?: string;
   rating?: number;
   phone?: string;
   address?: string;
@@ -32,79 +32,160 @@ interface SerpApiSearchParams {
 
 export class SearchAPI {
   private static readonly API_KEY = process.env.SERPAPI_API_KEY;
+  private static readonly SERPAPI_RETRY_DELAYS_MS = [500, 1500];
+  private static readonly PRIORITY_SITES = [
+    'fichacompleta.com.br',
+    'instacarro.com',
+    'magodoscarros.com',
+    'shopcar.com.br',
+    'autopapo.com.br',
+    'canalve.com.br',
+    'mundodoautomovelparapcd.com.br',
+    'mercadolivre.com.br',
+  ];
 
-  private static async searchSerpAPI(params: SerpApiSearchParams): Promise<SearchResult[]> {
-    try {
-      const allResults: SearchResult[] = [];
+  private static sleep(ms: number): Promise<void> {
+    return new Promise((resolve) => setTimeout(resolve, ms));
+  }
 
-      const response = await axios.get('https://serpapi.com/search.json', {
-        params: {
-          api_key: this.API_KEY,
-          engine: params.engine,
-          q: params.q,
-          location: params.location || 'Brazil',
-          google_domain: params.google_domain || 'google.com.br',
-          gl: params.gl || 'br',
-          hl: params.hl || 'pt',
-          safe: params.safe || 'active',
-          device: params.device || 'desktop',
-          tbm: params.tbm,
-          num: params.engine === 'google' && 10,
-        },
-      });
+  private static isEmptyGoogleResponse(data: any, params: SerpApiSearchParams): boolean {
+    if (params.engine !== 'google') {
+      return false;
+    }
 
-      const data = response.data as any;
+    const organicResults = Array.isArray(data?.organic_results) ? data.organic_results : [];
+    const organicState = data?.search_information?.organic_results_state;
+    const errorMessage = typeof data?.error === 'string' ? data.error : '';
 
-      switch (params.engine) {
-        case 'google_images':
-          const imageResults = data.images_results || [];
-          allResults.push(
-            ...imageResults.slice(0, 2).map((item: any) => ({
-              link: item.link || '',
-              imageUrl: item.original || item.thumbnail,
-              source: item.source,
-              type: 'image',
-            })),
-          );
-          break;
+    return (
+      organicResults.length === 0 &&
+      (organicState === 'Fully empty' ||
+        errorMessage.includes("Google hasn't returned any results"))
+    );
+  }
 
-        case 'google_local':
-          const localResults = data.local_results || [];
-          allResults.push(
-            ...localResults.slice(0, 5).map((item: any) => ({
-              title: item.title || '',
-              link: item.links?.website || '',
-              snippet: item.description || '',
-              source: item.type,
-              phone: item.phone,
-              address: item.address,
-              hours: item.hours,
-              type: 'local',
-            })),
-          );
-          break;
-
-        case 'google':
-        default:
-          const organicResults = data.organic_results || [];
-          allResults.push(
-            ...organicResults.map((item: any) => ({
-              title: item.title || '',
-              link: item.link || '',
-              snippet: item.snippet || '',
-              date: item.date,
-              source: item.source,
-              type: 'organic',
-            })),
-          );
-          break;
+  private static parseSerpApiResults(data: any, engine: SerpApiSearchParams['engine']): SearchResult[] {
+    switch (engine) {
+      case 'google_images': {
+        const imageResults = data.images_results || [];
+        return imageResults.slice(0, 2).map((item: any) => ({
+          position: item.position || 0,
+          title: item.title || '',
+          link: item.link || '',
+          snippet: '',
+          imageUrl: item.original || item.thumbnail,
+          source: item.source,
+          type: 'image',
+        }));
       }
 
-      return allResults;
-    } catch (error) {
-      console.error('SERPAPI error:', error);
-      return [];
+      case 'google_local': {
+        const localResults = data.local_results || [];
+        return localResults.slice(0, 5).map((item: any) => ({
+          position: item.position || 0,
+          title: item.title || '',
+          link: item.links?.website || '',
+          snippet: item.description || '',
+          source: item.type,
+          phone: item.phone,
+          address: item.address,
+          hours: item.hours,
+          type: 'local',
+        }));
+      }
+
+      case 'google':
+      default: {
+        const organicResults = data.organic_results || [];
+        return organicResults.map((item: any) => ({
+          position: item.position || 0,
+          title: item.title || '',
+          link: item.link || '',
+          snippet: item.snippet || '',
+          date: item.date,
+          source: item.source,
+          type: 'organic',
+        }));
+      }
     }
+  }
+
+  private static async searchSerpAPI(params: SerpApiSearchParams): Promise<SearchResult[]> {
+    const maxAttempts = this.SERPAPI_RETRY_DELAYS_MS.length + 1;
+
+    for (let attempt = 1; attempt <= maxAttempts; attempt++) {
+      try {
+        const response = await axios.get('https://serpapi.com/search.json', {
+          params: {
+            api_key: this.API_KEY,
+            engine: params.engine,
+            q: params.q,
+            location: params.location || 'Brazil',
+            google_domain: params.google_domain || 'google.com.br',
+            gl: params.gl || 'br',
+            hl: params.hl || 'pt',
+            safe: params.safe || 'active',
+            device: params.device || 'desktop',
+            tbm: params.tbm,
+            num: params.num ?? (params.engine === 'google' ? 10 : undefined),
+            start: params.start,
+          },
+          timeout: 20000,
+        });
+
+        const data = response.data as any;
+
+        if (this.isEmptyGoogleResponse(data, params)) {
+          if (attempt < maxAttempts) {
+            console.warn(
+              `SERPAPI empty google response (attempt ${attempt}/${maxAttempts}) for query: ${params.q}`,
+            );
+            await this.sleep(this.SERPAPI_RETRY_DELAYS_MS[attempt - 1]);
+            continue;
+          }
+
+          console.warn(`SERPAPI returned empty google results after retries for query: ${params.q}`);
+          return [];
+        }
+
+        return this.parseSerpApiResults(data, params.engine);
+      } catch (error) {
+        if (attempt < maxAttempts) {
+          console.warn(
+            `SERPAPI request failed (attempt ${attempt}/${maxAttempts}) for query: ${params.q}`,
+            error,
+          );
+          await this.sleep(this.SERPAPI_RETRY_DELAYS_MS[attempt - 1]);
+          continue;
+        }
+
+        console.error('SERPAPI error:', error);
+        return [];
+      }
+    }
+
+    return [];
+  }
+
+  private static buildTechnicalSearchQueries(searchTerm: string): string[] {
+    const prioritySitesQuery = this.PRIORITY_SITES.map((site) => `site:${site}`).join(' OR ');
+    const loosePrioritySitesQuery = this.PRIORITY_SITES.slice(0, 5)
+      .map((site) => `site:${site}`)
+      .join(' OR ');
+    const excludeSites = [
+      '-site:carrosnaweb.com.br',
+      '-site:byd.com',
+      '-site:youtube.com',
+      '-site:webmotors.com.br',
+      '-filetype:pdf',
+    ].join(' ');
+
+    return [
+      `${searchTerm} ficha tecnica (${prioritySitesQuery}) ${excludeSites}`,
+      `${searchTerm} ficha tecnica (${loosePrioritySitesQuery}) ${excludeSites}`,
+      `${searchTerm} ficha tecnica ${excludeSites}`,
+      `${searchTerm} especificacoes ${excludeSites}`,
+    ];
   }
 
   static async searchCarSites(carModel: string, year?: number): Promise<SearchResult[]> {
@@ -114,54 +195,41 @@ export class SearchAPI {
     const cached = await redisClient.get(cacheKey);
     if (cached) return JSON.parse(cached);
 
-    const prioritySitesQuery = [
-      'site:fichacompleta.com.br',
-      'site:instacarro.com',
-      'site:magodoscarros.com',
-      'site:shopcar.com.br',
-      'site:autopapo.com.br',
-      'site:canalve.com.br',
-      'site:mundodoautomovelparapcd.com.br',
-      'site:mercadolivre.com.br'
-    ].join(' OR ');
-
-    const excludeSites = [
-      '-site:carrosnaweb.com.br',
-      '-site:byd.com',
-      '-site:youtube.com',
-      '-site:webmotors.com.br',
-      '-filetype:pdf'
-    ].join(' ');
-
-    const searchPromises = [
-      this.searchSerpAPI({
+    let technicalResults: SearchResult[] = [];
+    for (const query of this.buildTechnicalSearchQueries(searchTerm)) {
+      technicalResults = await this.searchSerpAPI({
         engine: 'google',
-        q: `${searchTerm} ficha técnica (${prioritySitesQuery}) ${excludeSites}`,
-      }),
+        q: query,
+      });
 
+      if (technicalResults.length > 0) {
+        break;
+      }
+    }
+
+    const [reclameAquiResults, dealershipResults, imageResults] = await Promise.all([
       this.searchSerpAPI({
         engine: 'google',
         q: `${searchTerm} site:reclameaqui.com.br`,
       }),
-
       this.searchSerpAPI({
         engine: 'google_local',
-        q: `${searchTerm} concessionária`,
+        q: `${searchTerm} concessionaria`,
         tbm: 'lcl',
       }),
-
       this.searchSerpAPI({
         engine: 'google_images',
-        q: `${searchTerm}`,
+        q: searchTerm,
         tbm: 'isch',
       }),
-    ];
+    ]);
 
-    const resultsArrays = await Promise.all(searchPromises);
-
-    const allResults = resultsArrays.flat();
-
-    const finalResults = allResults.slice(0, 50);
+    const finalResults = [
+      ...technicalResults,
+      ...reclameAquiResults,
+      ...dealershipResults,
+      ...imageResults,
+    ].slice(0, 50);
 
     await redisClient.set(cacheKey, JSON.stringify(finalResults), {
       EX: 60 * 60 * 24,
@@ -191,7 +259,7 @@ export class SearchAPI {
   }
 
   static async searchDealerships(carModel: string, location = 'Brazil'): Promise<SearchResult[]> {
-    const searchTerm = `${carModel} concessionária`;
+    const searchTerm = `${carModel} concessionaria`;
     const cacheKey = `serpapi_dealers:${carModel}:${location}`;
 
     const cached = await redisClient.get(cacheKey);
@@ -200,7 +268,7 @@ export class SearchAPI {
     const results = await this.searchSerpAPI({
       engine: 'google_local',
       q: searchTerm,
-      location: location,
+      location,
       tbm: 'lcl',
     });
 

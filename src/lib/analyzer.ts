@@ -34,7 +34,104 @@ interface CategorizedSearchResults {
   dealerships: SearchResult[];
 }
 
+const schemaGeneralInfoRecovery = {
+  type: 'object',
+  additionalProperties: false,
+  properties: {
+    informacoes_gerais: {
+      type: 'object',
+      additionalProperties: false,
+      properties: {
+        fabricante: { type: ['string', 'null'] },
+        modelo: { type: 'string' },
+        ano: { type: ['number', 'null'] },
+        versao: { type: ['string', 'null'] },
+        preco: { type: ['number', 'null'] },
+        garantia: { type: ['string', 'null'] },
+        ipva: { type: ['number', 'null'] },
+        seguro: { type: ['number', 'null'] },
+      },
+      required: ['fabricante', 'modelo', 'ano', 'versao', 'preco', 'garantia', 'ipva', 'seguro'],
+    },
+  },
+  required: ['informacoes_gerais'],
+} as const;
+
+type GeneralInfoFields = CarData['informacoes_gerais'];
+type EssentialGeneralField = 'preco' | 'garantia' | 'ipva' | 'seguro';
+
+const ESSENTIAL_GENERAL_FIELDS: EssentialGeneralField[] = ['preco', 'garantia', 'ipva', 'seguro'];
+
 export class Analyzer {
+  private static getMissingEssentialGeneralFields(
+    info: Partial<GeneralInfoFields> | undefined,
+  ): EssentialGeneralField[] {
+    return ESSENTIAL_GENERAL_FIELDS.filter((field) => info?.[field] == null);
+  }
+
+  private static buildBasePrompt(urls: string[], carInfo: string): string {
+    return `
+        Analise as seguintes informações sobre o **${carInfo}**:
+
+        **URLs de Fichas Técnicas:**
+        ${urls.map((url, i) => `${i + 1}. ${url}`).join('\n')}
+      `;
+  }
+
+  private static async recoverMissingGeneralInfo(
+    urls: string[],
+    carModel: string,
+    year: number | undefined,
+    tecnico: Partial<CarData>,
+  ): Promise<Partial<GeneralInfoFields> | null> {
+    const missingFields = Analyzer.getMissingEssentialGeneralFields(tecnico.informacoes_gerais);
+
+    if (missingFields.length === 0) {
+      return null;
+    }
+
+    const carInfo = year ? `${carModel} ${year}` : carModel;
+    const recoveryPrompt = `
+      Revise somente os campos ausentes de informações gerais do veículo **${carInfo}**.
+
+      Campos ausentes que precisam de nova tentativa:
+      ${missingFields.map((field) => `- ${field}`).join('\n')}
+
+      Regras obrigatórias:
+      - Use as URLs fornecidas primeiro.
+      - Se algum desses campos não estiver nas URLs, use web_search obrigatoriamente.
+      - Não invente valores.
+      - Retorne todas as chaves de informacoes_gerais.
+      - Preserve os dados já encontrados quando eles aparecerem abaixo.
+
+      Valores já extraídos:
+      ${JSON.stringify(tecnico.informacoes_gerais ?? {}, null, 2)}
+
+      **URLs de referência:**
+      ${urls.map((url, i) => `${i + 1}. ${url}`).join('\n')}
+    `;
+
+    const recoveryResponse = await openai.responses.create({
+      model: 'gpt-4.1',
+      instructions:
+        'Você é um especialista em análise automotiva. Recupere apenas informações gerais essenciais. Retorne apenas JSON válido e nunca omita chaves.',
+      input: recoveryPrompt,
+      tools: [{ type: 'web_search' }],
+      text: {
+        format: {
+          type: 'json_schema',
+          name: 'car_data_general_info_recovery',
+          strict: true,
+          schema: schemaGeneralInfoRecovery,
+        },
+      },
+      temperature: 0,
+    });
+
+    const recovered = JSON.parse(recoveryResponse.output_text || '{}');
+    return recovered.informacoes_gerais ?? null;
+  }
+
   static async extractCarDataFromURLs(
     urls: string[],
     carModel: string,
@@ -65,9 +162,9 @@ export class Analyzer {
         ${urls.map((url, i) => `${i + 1}. ${url}`).join('\n')}
       `;
 
-      const promptTecnico = basePrompt;
+      const promptTecnico = Analyzer.buildBasePrompt(urls, carInfo);
       
-      const promptFeatures = basePrompt;
+      const promptFeatures = Analyzer.buildBasePrompt(urls, carInfo);
       
       const promptAnalise = `
         ${basePrompt}
@@ -155,6 +252,22 @@ export class Analyzer {
       const tecnico = JSON.parse(tecnicoData.output_text || '{}');
       const features = JSON.parse(featuresData.output_text || '{}');
       const analise = JSON.parse(analiseData.output_text || '{}');
+
+      const recoveredGeneralInfo = await Analyzer.recoverMissingGeneralInfo(
+        urls,
+        carModel,
+        year,
+        tecnico,
+      );
+
+      if (recoveredGeneralInfo) {
+        tecnico.informacoes_gerais = {
+          ...tecnico.informacoes_gerais,
+          ...Object.fromEntries(
+            Object.entries(recoveredGeneralInfo).filter(([, value]) => value != null),
+          ),
+        };
+      }
 
       const carData: CarData = {
         ...tecnico,

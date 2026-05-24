@@ -8,6 +8,7 @@ import { Button } from '../components/Button';
 import CarSelector from '../components/CarSelector';
 import ComparisonAIResult from '../components/ComparisonAIResult';
 import PriceHistoryChart from '../components/PriceHistoryChart';
+import { TCC_ALLOWED_CAR_ITEMS, TCC_ALLOWED_CARS } from '@/lib/tcc-config';
 
 export default function ComparisonPage() {
   const { toast } = useToast();
@@ -15,9 +16,11 @@ export default function ComparisonPage() {
   const [slots, setSlots] = useState([
     { id: 1, data: null, loading: false },
     { id: 2, data: null, loading: false },
+    { id: 3, data: null, loading: false },
+    { id: 4, data: null, loading: false },
   ]);
 
-  const [nextId, setNextId] = useState(3);
+  const [nextId, setNextId] = useState(5);
   const [comparisonHTML, setComparisonHTML] = useState<string | null>(null);
   const [priceHistoryCars, setPriceHistoryCars] = useState<any[]>([]);
   const [isComparing, setIsComparing] = useState(false);
@@ -32,9 +35,9 @@ export default function ComparisonPage() {
 
     const filledSlots = slots.filter((s) => s.data);
 
-    if (filledSlots.length < 2) {
+    if (filledSlots.length !== TCC_ALLOWED_CARS.length) {
       toast({
-        title: 'Selecione ao menos 2 veículos',
+        title: 'Selecione os 4 veículos',
         variant: 'destructive',
       });
       return;
@@ -43,7 +46,7 @@ export default function ComparisonPage() {
     setIsComparing(true);
 
     try {
-      const selectedCars = filledSlots.map((s) => `${s.data.Modelo}, ${s.data.AnoModelo}`);
+      const selectedCars = TCC_ALLOWED_CAR_ITEMS;
 
       const response = await fetch('/api/search-analyze', {
         method: 'POST',
@@ -108,11 +111,6 @@ export default function ComparisonPage() {
     setNextId((id) => id + 1);
   };
 
-  const removeSlot = (id: number) => {
-    if (slots.length <= 1) return;
-    setSlots((prev) => prev.filter((slot) => slot.id !== id));
-  };
-
   const activeCarsCount = slots.filter((s) => s.data).length;
   const isLoadingAny = slots.some((s) => s.loading) || isComparing;
 
@@ -132,7 +130,7 @@ export default function ComparisonPage() {
             <div>
               <h1 className="text-xl font-bold text-slate-900">MeuCarroIdeal</h1>
               <p className="text-xs text-slate-600 hidden sm:block">
-                Compare até 4 veículos
+                Compare os 4 veículos disponíveis
               </p>
             </div>
           </div>
@@ -173,9 +171,10 @@ export default function ComparisonPage() {
                 <CarSelector
                   id={slot.id}
                   carNumber={index + 1}
+                  allowedCar={TCC_ALLOWED_CARS[index]}
                   onCarDataChange={(data) => handleUpdateSlot(slot.id, 'data', data)}
                   onLoadingChange={(loading) => handleUpdateSlot(slot.id, 'loading', loading)}
-                  onRemove={slots.length > 1 ? () => removeSlot(slot.id) : null}
+                  onRemove={null}
                 />
               </motion.div>
             ))}
@@ -185,7 +184,7 @@ export default function ComparisonPage() {
         <div className="flex justify-center mb-8">
           <Button
             onClick={handleCompare}
-            disabled={activeCarsCount < 2 || isLoadingAny}
+            disabled={activeCarsCount !== TCC_ALLOWED_CARS.length || isLoadingAny}
             size="lg"
             className="gap-2 px-8 py-6 text-lg font-semibold shadow-lg hover:shadow-xl transition-all"
           >

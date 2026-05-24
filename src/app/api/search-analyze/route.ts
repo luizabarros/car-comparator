@@ -10,7 +10,14 @@ import { Analyzer } from '../../../lib/analyzer';
 import { AnalyzedCar, CarData, CarItem, ProcessedURLs, SearchFilterResult, SearchResult } from '@/types/car'
 import { SearchAPI } from '@/lib/search'
 import { HTMLGenerator } from '@/lib/html-generator'
-import { RateLimiter } from '@/lib/rate-limiter'
+import { RateLimiter, redisClient } from '@/lib/rate-limiter'
+import {
+  buildTccComparisonCacheKey,
+  isTccCacheOnlyEnabled,
+  matchesTccAllowedCars,
+  ONE_YEAR_IN_SECONDS,
+  TCC_ALLOWED_CAR_ITEMS,
+} from '@/lib/tcc-config'
 
 const ANALYSIS_TIMEOUT_PER_CAR = 60000;
 const SEARCH_TIMEOUT_PER_CAR = 30000;
@@ -252,7 +259,7 @@ export async function GET() {
     message: 'Use POST to run search + AI analysis',
     usage: {
       method: 'POST',
-      body: '["Toyota Corolla, 2020", "Honda Civic, 2021"]'
+      body: TCC_ALLOWED_CAR_ITEMS
     }
   })
 }
@@ -268,8 +275,36 @@ export async function POST(request: NextRequest) {
     if (!Array.isArray(carItems) || carItems.length === 0) {
       return NextResponse.json({ 
         error: 'Array of car items is required',
-        example: '["Toyota Corolla, 2020", "Honda Civic, 2021"]'
+        example: TCC_ALLOWED_CAR_ITEMS
       }, { status: 400 });
+    }
+
+    if (!matchesTccAllowedCars(carItems)) {
+      return NextResponse.json({
+        error: 'Vehicle list is not allowed for this deployment',
+        allowedVehicles: TCC_ALLOWED_CAR_ITEMS,
+      }, { status: 400 });
+    }
+
+    const comparisonCacheKey = buildTccComparisonCacheKey(carItems);
+
+    if (redisClient.isReady) {
+      const cachedComparison = await redisClient.get(comparisonCacheKey);
+      if (cachedComparison) {
+        return NextResponse.json(JSON.parse(cachedComparison));
+      }
+    } else if (isTccCacheOnlyEnabled()) {
+      return NextResponse.json({
+        error: 'Cache unavailable',
+        message: 'Redis is required when OPENAI_CACHE_ONLY=true.',
+      }, { status: 503 });
+    }
+
+    if (isTccCacheOnlyEnabled()) {
+      return NextResponse.json({
+        error: 'Comparison not available in cache',
+        message: 'This deployment is running in cache-only mode. Run the warmup before enabling OPENAI_CACHE_ONLY=true.',
+      }, { status: 409 });
     }
 
     const numCars = carItems.length;
@@ -289,13 +324,21 @@ export async function POST(request: NextRequest) {
       `Total request timeout exceeded for ${numCars} cars`
     );
 
-    return NextResponse.json({
+    const responseBody = {
       success: true,
       totalVehicles: carItems.length,
       analyzedVehicles: carItems.length,
       data: result.allCarsData,
       comparisonHTML: result.comparisonHTML
-    });
+    };
+
+    if (redisClient.isReady) {
+      await redisClient.set(comparisonCacheKey, JSON.stringify(responseBody), {
+        EX: ONE_YEAR_IN_SECONDS,
+      });
+    }
+
+    return NextResponse.json(responseBody);
 
   } catch (error) {
     if (error instanceof Error && error.message === 'Rate limit exceeded') {

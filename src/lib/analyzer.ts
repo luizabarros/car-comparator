@@ -2,6 +2,7 @@ import OpenAI from 'openai';
 import crypto from 'crypto';
 import { CarData } from '../types/car';
 import { redisClient } from './rate-limiter';
+import { ONE_YEAR_IN_SECONDS } from './tcc-config';
 import { 
   SYSTEM_PROMPT_CHUNK_TECNICO,
   SYSTEM_PROMPT_CHUNK_FEATURES, 
@@ -282,7 +283,7 @@ export class Analyzer {
 
       if (redisClient.isReady) {
         await redisClient.set(cacheKey, JSON.stringify(carData), {
-          EX: 60 * 60 * 24,
+          EX: ONE_YEAR_IN_SECONDS,
         });
         console.log(`💾 Cache saved: ${carModel}`);
       }

@@ -8,7 +8,7 @@ import { fipeService } from '../services/fipe.service';
 import { useToast } from './UseToast';
 import { Button } from './Button';
 
-export default function CarSelector({ id, carNumber, onCarDataChange, onLoadingChange, onRemove }) {
+export default function CarSelector({ id, carNumber, allowedCar, onCarDataChange, onLoadingChange, onRemove }) {
   const [brands, setBrands] = useState([]);
   const [models, setModels] = useState([]);
   const [years, setYears] = useState([]);
@@ -57,7 +57,7 @@ export default function CarSelector({ id, carNumber, onCarDataChange, onLoadingC
     onCarDataChange(null);
 
     try {
-      const data = await fipeService.getModels(brandCode);
+      const data = await fipeService.getModels(brandCode, allowedCar?.model);
       setModels(data.modelos || []);
     } catch {
       toast({
@@ -77,7 +77,7 @@ export default function CarSelector({ id, carNumber, onCarDataChange, onLoadingC
     onCarDataChange(null);
 
     try {
-      const data = await fipeService.getYears(brandCode, modelCode);
+      const data = await fipeService.getYears(brandCode, modelCode, allowedCar?.year);
       setYears(data);
     } catch {
       toast({

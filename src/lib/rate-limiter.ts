@@ -31,17 +31,26 @@ connectRedis();
 
 const rateLimiter = new RateLimiterRedis({
   storeClient: redisClient,
-  points: 10,     // 10 requisições
-  duration: 60,    // Por minuto (10 req/min)
+  points: 100,
+  duration: 60,
   blockDuration: 60,
 });
 
 export class RateLimiter {
   static async consume(key: string): Promise<void> {
+    if (!redisClient.isReady) {
+      console.warn('Rate limiter skipped because Redis is not ready.');
+      return;
+    }
+
     try {
       await rateLimiter.consume(key);
-    } catch {
-      throw new Error('Rate limit exceeded');
+    } catch (error: any) {
+      if (typeof error?.msBeforeNext === 'number') {
+        throw new Error('Rate limit exceeded');
+      }
+
+      console.warn('Rate limiter skipped because Redis returned an error.', error);
     }
   }
 }

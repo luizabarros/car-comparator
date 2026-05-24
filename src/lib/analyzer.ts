@@ -14,9 +14,11 @@ import {
   schemaAnalise 
 } from '@/types/schema';
 
-const openai = new OpenAI({
-  apiKey: process.env.OPENAI_API_KEY,
-});
+function getOpenAIClient() {
+  return new OpenAI({
+    apiKey: process.env.OPENAI_API_KEY,
+  });
+}
 
 interface SearchResult {
   link: string;
@@ -112,7 +114,7 @@ export class Analyzer {
       ${urls.map((url, i) => `${i + 1}. ${url}`).join('\n')}
     `;
 
-    const recoveryResponse = await openai.responses.create({
+    const recoveryResponse = await getOpenAIClient().responses.create({
       model: 'gpt-4.1',
       instructions:
         'Você é um especialista em análise automotiva. Recupere apenas informações gerais essenciais. Retorne apenas JSON válido e nunca omita chaves.',
@@ -201,7 +203,7 @@ export class Analyzer {
       `;
 
       const [tecnicoData, featuresData, analiseData] = await Promise.all([
-        openai.responses.create({
+        getOpenAIClient().responses.create({
           model: 'gpt-4.1',
           instructions: SYSTEM_PROMPT_CHUNK_TECNICO,
           input: promptTecnico,
@@ -217,7 +219,7 @@ export class Analyzer {
           temperature: 0.1,
         }),
 
-        openai.responses.create({
+        getOpenAIClient().responses.create({
           model: 'gpt-4.1',
           instructions: SYSTEM_PROMPT_CHUNK_FEATURES,
           input: promptFeatures,
@@ -233,7 +235,7 @@ export class Analyzer {
           temperature: 0.1,
         }),
 
-        openai.responses.create({
+        getOpenAIClient().responses.create({
           model: 'gpt-4.1',
           instructions: SYSTEM_PROMPT_CHUNK_ANALISE,
           input: promptAnalise,

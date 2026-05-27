@@ -8,7 +8,6 @@ import { Button } from '../components/Button';
 import CarSelector from '../components/CarSelector';
 import ComparisonAIResult from '../components/ComparisonAIResult';
 import PriceHistoryChart from '../components/PriceHistoryChart';
-import { TCC_ALLOWED_CAR_ITEMS, TCC_ALLOWED_CARS } from '@/lib/tcc-config';
 
 export default function ComparisonPage() {
   const { toast } = useToast();
@@ -35,9 +34,9 @@ export default function ComparisonPage() {
 
     const filledSlots = slots.filter((s) => s.data);
 
-    if (filledSlots.length !== TCC_ALLOWED_CARS.length) {
+    if (filledSlots.length < 2) {
       toast({
-        title: 'Selecione os 4 veículos',
+        title: 'Selecione ao menos 2 veículos',
         variant: 'destructive',
       });
       return;
@@ -46,7 +45,7 @@ export default function ComparisonPage() {
     setIsComparing(true);
 
     try {
-      const selectedCars = TCC_ALLOWED_CAR_ITEMS;
+      const selectedCars = filledSlots.map((slot) => `${slot.data.Modelo}, ${slot.data.AnoModelo}`);
 
       const response = await fetch('/api/search-analyze', {
         method: 'POST',
@@ -130,7 +129,7 @@ export default function ComparisonPage() {
             <div>
               <h1 className="text-xl font-bold text-slate-900">MeuCarroIdeal</h1>
               <p className="text-xs text-slate-600 hidden sm:block">
-                Compare os 4 veículos disponíveis
+                Compare veículos lado a lado
               </p>
             </div>
           </div>
@@ -171,7 +170,6 @@ export default function ComparisonPage() {
                 <CarSelector
                   id={slot.id}
                   carNumber={index + 1}
-                  allowedCar={TCC_ALLOWED_CARS[index]}
                   onCarDataChange={(data) => handleUpdateSlot(slot.id, 'data', data)}
                   onLoadingChange={(loading) => handleUpdateSlot(slot.id, 'loading', loading)}
                   onRemove={null}
@@ -184,7 +182,7 @@ export default function ComparisonPage() {
         <div className="flex justify-center mb-8">
           <Button
             onClick={handleCompare}
-            disabled={activeCarsCount !== TCC_ALLOWED_CARS.length || isLoadingAny}
+            disabled={activeCarsCount < 2 || isLoadingAny}
             size="lg"
             className="gap-2 px-8 py-6 text-lg font-semibold shadow-lg hover:shadow-xl transition-all"
           >

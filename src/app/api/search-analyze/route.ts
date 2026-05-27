@@ -12,11 +12,8 @@ import { SearchAPI } from '@/lib/search'
 import { HTMLGenerator } from '@/lib/html-generator'
 import { RateLimiter, redisClient } from '@/lib/rate-limiter'
 import {
-  buildTccComparisonCacheKey,
-  isTccCacheOnlyEnabled,
-  matchesTccAllowedCars,
-  ONE_YEAR_IN_SECONDS,
-  TCC_ALLOWED_CAR_ITEMS,
+  buildComparisonCacheKey,
+  CACHE_TTL_IN_SECONDS,
 } from '@/lib/tcc-config'
 
 const ANALYSIS_TIMEOUT_PER_CAR = 60000;
@@ -259,7 +256,7 @@ export async function GET() {
     message: 'Use POST to run search + AI analysis',
     usage: {
       method: 'POST',
-      body: TCC_ALLOWED_CAR_ITEMS
+      body: ['Toyota Corolla, 2024', 'Honda Civic, 2024']
     }
   })
 }
@@ -275,36 +272,17 @@ export async function POST(request: NextRequest) {
     if (!Array.isArray(carItems) || carItems.length === 0) {
       return NextResponse.json({ 
         error: 'Array of car items is required',
-        example: TCC_ALLOWED_CAR_ITEMS
+        example: ['Toyota Corolla, 2024', 'Honda Civic, 2024']
       }, { status: 400 });
     }
 
-    if (!matchesTccAllowedCars(carItems)) {
-      return NextResponse.json({
-        error: 'Vehicle list is not allowed for this deployment',
-        allowedVehicles: TCC_ALLOWED_CAR_ITEMS,
-      }, { status: 400 });
-    }
-
-    const comparisonCacheKey = buildTccComparisonCacheKey(carItems);
+    const comparisonCacheKey = buildComparisonCacheKey(carItems);
 
     if (redisClient.isReady) {
       const cachedComparison = await redisClient.get(comparisonCacheKey);
       if (cachedComparison) {
         return NextResponse.json(JSON.parse(cachedComparison));
       }
-    } else if (isTccCacheOnlyEnabled()) {
-      return NextResponse.json({
-        error: 'Cache unavailable',
-        message: 'Redis is required when OPENAI_CACHE_ONLY=true.',
-      }, { status: 503 });
-    }
-
-    if (isTccCacheOnlyEnabled()) {
-      return NextResponse.json({
-        error: 'Comparison not available in cache',
-        message: 'This deployment is running in cache-only mode. Run the warmup before enabling OPENAI_CACHE_ONLY=true.',
-      }, { status: 409 });
     }
 
     const numCars = carItems.length;
@@ -334,7 +312,7 @@ export async function POST(request: NextRequest) {
 
     if (redisClient.isReady) {
       await redisClient.set(comparisonCacheKey, JSON.stringify(responseBody), {
-        EX: ONE_YEAR_IN_SECONDS,
+        EX: CACHE_TTL_IN_SECONDS,
       });
     }
 

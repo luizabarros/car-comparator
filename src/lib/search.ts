@@ -1,6 +1,6 @@
 import axios from 'axios';
 import { redisClient } from './rate-limiter';
-import { ONE_YEAR_IN_SECONDS } from './tcc-config';
+import { CACHE_TTL_IN_SECONDS } from './tcc-config';
 
 interface SearchResult {
   position: number;
@@ -233,7 +233,7 @@ export class SearchAPI {
     ].slice(0, 50);
 
     await redisClient.set(cacheKey, JSON.stringify(finalResults), {
-      EX: ONE_YEAR_IN_SECONDS,
+      EX: CACHE_TTL_IN_SECONDS,
     });
 
     return finalResults;
@@ -253,7 +253,7 @@ export class SearchAPI {
     });
 
     await redisClient.set(cacheKey, JSON.stringify(results), {
-      EX: ONE_YEAR_IN_SECONDS,
+      EX: CACHE_TTL_IN_SECONDS,
     });
 
     return results;
@@ -274,7 +274,7 @@ export class SearchAPI {
     });
 
     await redisClient.set(cacheKey, JSON.stringify(results), {
-      EX: ONE_YEAR_IN_SECONDS,
+      EX: CACHE_TTL_IN_SECONDS,
     });
 
     return results;
@@ -297,7 +297,7 @@ export class SearchAPI {
     });
 
     await redisClient.set(cacheKey, JSON.stringify(results), {
-      EX: ONE_YEAR_IN_SECONDS,
+      EX: CACHE_TTL_IN_SECONDS,
     });
 
     return results;

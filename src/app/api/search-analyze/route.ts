@@ -20,6 +20,8 @@ const ANALYSIS_TIMEOUT_PER_CAR = 60000;
 const SEARCH_TIMEOUT_PER_CAR = 30000;
 const BASE_COMPARISON_TIMEOUT = 30000;
 const EXTRA_COMPARISON_PER_CAR = 15000;
+const MIN_CARS_PER_COMPARISON = 2;
+const MAX_CARS_PER_COMPARISON = 4;
 
 function withTimeout<T>(promise: Promise<T>, timeoutMs: number, errorMessage: string): Promise<T> {
   return Promise.race([
@@ -273,6 +275,16 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ 
         error: 'Array of car items is required',
         example: ['Toyota Corolla, 2024', 'Honda Civic, 2024']
+      }, { status: 400 });
+    }
+
+    if (
+      carItems.length < MIN_CARS_PER_COMPARISON ||
+      carItems.length > MAX_CARS_PER_COMPARISON
+    ) {
+      return NextResponse.json({
+        error: 'Invalid number of car items',
+        details: `Compare no mínimo ${MIN_CARS_PER_COMPARISON} e no máximo ${MAX_CARS_PER_COMPARISON} veículos.`
       }, { status: 400 });
     }
 

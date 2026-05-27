@@ -9,17 +9,21 @@ import CarSelector from '../components/CarSelector';
 import ComparisonAIResult from '../components/ComparisonAIResult';
 import PriceHistoryChart from '../components/PriceHistoryChart';
 
+const MIN_CARS = 2;
+const MAX_CARS = 4;
+
 export default function ComparisonPage() {
   const { toast } = useToast();
 
-  const [slots, setSlots] = useState([
-    { id: 1, data: null, loading: false },
-    { id: 2, data: null, loading: false },
-    { id: 3, data: null, loading: false },
-    { id: 4, data: null, loading: false },
-  ]);
+  const [slots, setSlots] = useState(() =>
+    Array.from({ length: MIN_CARS }, (_, index) => ({
+      id: index + 1,
+      data: null,
+      loading: false,
+    })),
+  );
 
-  const [nextId, setNextId] = useState(5);
+  const [nextId, setNextId] = useState(MIN_CARS + 1);
   const [comparisonHTML, setComparisonHTML] = useState<string | null>(null);
   const [priceHistoryCars, setPriceHistoryCars] = useState<any[]>([]);
   const [isComparing, setIsComparing] = useState(false);
@@ -34,9 +38,18 @@ export default function ComparisonPage() {
 
     const filledSlots = slots.filter((s) => s.data);
 
-    if (filledSlots.length < 2) {
+    if (filledSlots.length < MIN_CARS) {
       toast({
         title: 'Selecione ao menos 2 veículos',
+        variant: 'destructive',
+      });
+      return;
+    }
+
+    if (filledSlots.length > MAX_CARS) {
+      toast({
+        title: 'Limite atingido',
+        description: 'Você pode comparar no máximo 4 veículos.',
         variant: 'destructive',
       });
       return;
@@ -96,7 +109,7 @@ export default function ComparisonPage() {
   };
 
   const addSlot = () => {
-    if (slots.length >= 4) {
+    if (slots.length >= MAX_CARS) {
       toast({
         title: 'Limite atingido',
         description: 'Você pode comparar no máximo 4 veículos.',
@@ -108,6 +121,19 @@ export default function ComparisonPage() {
     setSlots((prev) => [...prev, { id: nextId, data: null, loading: false }]);
 
     setNextId((id) => id + 1);
+  };
+
+  const removeSlot = (id: number) => {
+    if (slots.length <= MIN_CARS) {
+      toast({
+        title: 'Mínimo atingido',
+        description: 'A comparação precisa ter pelo menos 2 veículos.',
+        variant: 'destructive',
+      });
+      return;
+    }
+
+    setSlots((prev) => prev.filter((slot) => slot.id !== id));
   };
 
   const activeCarsCount = slots.filter((s) => s.data).length;
@@ -136,10 +162,10 @@ export default function ComparisonPage() {
 
           <Button
             onClick={addSlot}
-            disabled={slots.length >= 4 || isLoadingAny}
+            disabled={slots.length >= MAX_CARS || isLoadingAny}
             variant="outline"
             size="sm"
-            className="gap-2 hidden sm:flex"
+            className="gap-2"
           >
             <Plus className="w-4 h-4" /> Adicionar Veículo
           </Button>
@@ -172,7 +198,7 @@ export default function ComparisonPage() {
                   carNumber={index + 1}
                   onCarDataChange={(data) => handleUpdateSlot(slot.id, 'data', data)}
                   onLoadingChange={(loading) => handleUpdateSlot(slot.id, 'loading', loading)}
-                  onRemove={null}
+                  onRemove={slots.length > MIN_CARS ? () => removeSlot(slot.id) : null}
                 />
               </motion.div>
             ))}
@@ -182,7 +208,7 @@ export default function ComparisonPage() {
         <div className="flex justify-center mb-8">
           <Button
             onClick={handleCompare}
-            disabled={activeCarsCount < 2 || isLoadingAny}
+            disabled={activeCarsCount < MIN_CARS || isLoadingAny}
             size="lg"
             className="gap-2 px-8 py-6 text-lg font-semibold shadow-lg hover:shadow-xl transition-all"
           >

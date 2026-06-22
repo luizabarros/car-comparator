@@ -131,6 +131,10 @@ class URLProcessingFilter {
           .map(r => r.link)
           .slice(0, 2);
 
+        if (!organicUrls || organicUrls.length === 0) {
+          throw new Error(`No valid technical URLs found for ${result.carModel}`);
+        }
+
         const reclameAquiResults = result.searchResults.filter(r => 
           r.type === 'organic' && 
           r.link && 

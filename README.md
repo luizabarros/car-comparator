@@ -130,61 +130,9 @@ interface CarData {
 - **Framer Motion**: Animações
 - **Lucide React**: Ícones
 
-## Contribuições Técnicas
-
-### 1. Resiliência sobre Precisão
-> "A imprecisão observada não decorre do modelo de linguagem, mas da natureza genérica da camada de recuperação."
-
-### 2. Chunking Especializado
-> "A unificação reduziria chamadas, mas aumentaria alucinação. A escolha por chunks prioriza corretude e auditabilidade."
-
-### 3. Otimização Baseada em Perfil
-> "Identificou-se que uma boa parte do código consumia a maior parte da latência, caracterizando oportunidade clara de otimização (Lei de Pareto)."
-
-### 4. Arquitetura Híbrida
-> "Em cenários com múltiplas fontes heterogêneas e estrutura instável, o uso de modelos de linguagem mostrou-se mais robusto que scraping tradicional."
-
-## Limitações e Trabalhos Futuros
-
-### Limitações Atuais
-1. **Latência dominada por LLM**: ~30s por veículo (inferência GPT-4.1)
-2. **Custos operacionais**: OpenAI + SerpAPI (~$0.30 por comparação)
-3. **Dependência de APIs externas**: Disponibilidade não garantida
-
-### Melhorias Propostas
-1. **Fine-tuning de modelo específico** para domínio automotivo
-2. **Crawler próprio** para reduzir dependência do SerpAPI
-3. **Modelo local** (Llama 3.1) para casos de uso específicos (não é adequado, pois precisa de GPU)
-4. **Sistema de feedback** para correção iterativa de extrações
-
 ## Conclusão
 
 O sistema demonstra a viabilidade de usar LLMs para extração de informação em domínios complexos, combinando resiliência semântica com validação factual. A arquitetura em pipeline permite isolamento de falhas e otimizações incrementais, enquanto o chunking especializado equilibra precisão e custos computacionais.
-
-# Referências
-- FIELDING, R. T. **Architectural Styles and the Design of Network-based Software Architectures**. Doctoral dissertation, University of California, Irvine, 2000.
-
-GARLAN, David; SHAW, Mary.
-An Introduction to Software Architecture.
-Advances in Software Engineering and Knowledge Engineering, 1993.
-
-A batch-oriented, sequential processing pipeline with centralized orchestration, inspired by the Pipes-and-Filters decomposition but not conforming to the Pipe-and-Filter architectural style as defined by Garlan & Shaw and Fielding.
-
-https://www.fca.org.uk/publication/research/price-comparison-website-consumer-research.pdf
-
-https://publications.anl.gov/anlpubs/2021/05/167399.pdf
-
-https://www.researchgate.net/publication/367719780_Web_Scraping_Techniques_and_Applications_A_Literature_Review
-
-https://www.researchgate.net/publication/258099336_Scraping_the_Social_Issues_in_Live_Research
-
-https://arxiv.org/pdf/2307.06435
-
-[2310.03003] From Words to Watts: Benchmarking the Energy Costs of Large Language Model Inference
-
-A Survey on Hardware Accelerators for Large Language Models
-
-A Study Of LLMs On Multiple AI Accelerators And GPUs With A Performance Evaluation
 
 ---
 
